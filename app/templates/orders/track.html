@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Live Shipment Tracking #{{ order.order_number }} - Fancy Store{% endblock %}
+
+{% block content %}
+<div class="container py-4 my-2">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb font-sm">
+            <li class="breadcrumb-item"><a href="{{ url_for('orders.history') }}" class="text-decoration-none">My Orders</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('orders.order_detail', order_number=order.order_number) }}" class="text-decoration-none">Order #{{ order.order_number }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Live Tracking</li>
+        </ol>
+    </nav>
+
+    <!-- Top Shipment Info -->
+    <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 mb-5 bg-surface">
+        <div class="row align-items-center g-4 pb-4 border-bottom mb-5">
+            <div class="col-md-7">
+                <span class="badge bg-primary px-3 py-1 rounded-pill font-xs text-uppercase mb-2">Live Courier Tracking</span>
+                <h2 class="fw-extrabold mb-1">Order #{{ order.order_number }}</h2>
+                <div class="text-secondary font-sm">
+                    Courier Partner: <strong class="text-dark">BlueDart Express India</strong> &bull; 
+                    AWB Tracking ID: <strong class="text-primary font-monospace">{{ order.tracking_number or 'BLD987654321IN' }}</strong>
+                </div>
+            </div>
+            <div class="col-md-5 text-md-end text-start">
+                <div class="font-xs text-muted text-uppercase">Current Status</div>
+                <div class="display-6 fw-extrabold {% if order.order_status == 'Delivered' %}text-success{% elif order.order_status in ['Cancelled', 'Returned'] %}text-danger{% else %}text-primary{% endif %}">
+                    {{ order.order_status }}
+                </div>
+                <div class="font-xs text-muted mt-1">Expected Delivery: <strong>Within 2–4 Business Days</strong></div>
+            </div>
+        </div>
+
+        <!-- Visual Shipment Timeline -->
+        <div class="py-4 my-2">
+            <div class="row text-center position-relative g-3 justify-content-between">
+                
+                <!-- Step 1: Placed -->
+                <div class="col position-relative">
+                    <div class="mx-auto mb-3 rounded-circle d-flex align-items-center justify-content-center text-white bg-success shadow" style="width: 54px; height: 54px; font-size: 1.2rem; z-index: 2; position: relative;">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <h6 class="fw-bold font-sm mb-1">Order Placed</h6>
+                    <div class="font-xs text-muted">{{ order.created_at.strftime('%d %b, %I:%M %p') if order.created_at else 'Completed' }}</div>
+                </div>
+
+                <!-- Step 2: Processing -->
+                {% set step2_done = order.order_status in ['Processing', 'Shipped', 'Out for Delivery', 'Delivered'] %}
+                <div class="col position-relative">
+                    <div class="mx-auto mb-3 rounded-circle d-flex align-items-center justify-content-center shadow {% if step2_done %}bg-success text-white{% else %}bg-secondary-subtle text-secondary{% endif %}" style="width: 54px; height: 54px; font-size: 1.2rem; z-index: 2; position: relative;">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <h6 class="fw-bold font-sm mb-1 {% if not step2_done %}text-muted{% endif %}">Packed &amp; Processing</h6>
+                    <div class="font-xs text-muted">{{ 'Verified & Packed' if step2_done else 'Pending' }}</div>
+                </div>
+
+                <!-- Step 3: Shipped -->
+                {% set step3_done = order.order_status in ['Shipped', 'Out for Delivery', 'Delivered'] %}
+                <div class="col position-relative">
+                    <div class="mx-auto mb-3 rounded-circle d-flex align-items-center justify-content-center shadow {% if step3_done %}bg-success text-white{% else %}bg-secondary-subtle text-secondary{% endif %}" style="width: 54px; height: 54px; font-size: 1.2rem; z-index: 2; position: relative;">
+                        <i class="fas fa-truck-loading"></i>
+                    </div>
+                    <h6 class="fw-bold font-sm mb-1 {% if not step3_done %}text-muted{% endif %}">Shipped via Courier</h6>
+                    <div class="font-xs text-muted">{{ 'In Transit' if step3_done else 'Pending' }}</div>
+                </div>
+
+                <!-- Step 4: Out for Delivery -->
+                {% set step4_done = order.order_status in ['Out for Delivery', 'Delivered'] %}
+                <div class="col position-relative">
+                    <div class="mx-auto mb-3 rounded-circle d-flex align-items-center justify-content-center shadow {% if step4_done %}bg-success text-white{% else %}bg-secondary-subtle text-secondary{% endif %}" style="width: 54px; height: 54px; font-size: 1.2rem; z-index: 2; position: relative;">
+                        <i class="fas fa-motorcycle"></i>
+                    </div>
+                    <h6 class="fw-bold font-sm mb-1 {% if not step4_done %}text-muted{% endif %}">Out for Delivery</h6>
+                    <div class="font-xs text-muted">{{ 'Out with Rider' if step4_done else 'Pending' }}</div>
+                </div>
+
+                <!-- Step 5: Delivered -->
+                {% set step5_done = order.order_status == 'Delivered' %}
+                <div class="col position-relative">
+                    <div class="mx-auto mb-3 rounded-circle d-flex align-items-center justify-content-center shadow {% if step5_done %}bg-success text-white{% else %}bg-secondary-subtle text-secondary{% endif %}" style="width: 54px; height: 54px; font-size: 1.2rem; z-index: 2; position: relative;">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h6 class="fw-bold font-sm mb-1 {% if not step5_done %}text-muted{% endif %}">Delivered</h6>
+                    <div class="font-xs text-muted">{{ 'Delivered safely' if step5_done else 'Pending' }}</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Shipment Audit Log -->
+        <div class="mt-5 pt-4 border-top">
+            <h5 class="fw-bold mb-4"><i class="fas fa-history text-primary me-2"></i>Shipment Activity Audit Log</h5>
+            
+            <div class="table-responsive font-sm">
+                <table class="table table-bordered align-middle m-0">
+                    <thead class="bg-secondary-subtle bg-opacity-25">
+                        <tr>
+                            <th class="py-3 ps-4" style="width: 220px;">Date &amp; Time</th>
+                            <th class="py-3" style="width: 180px;">Status Update</th>
+                            <th class="py-3">Activity Description / Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if order.history %}
+                            {% for event in order.history | reverse %}
+                                <tr>
+                                    <td class="ps-4 py-3 font-monospace text-muted">{{ event.timestamp.strftime('%d-%b-%Y %I:%M %p') if event.timestamp else 'N/A' }}</td>
+                                    <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1">{{ event.status }}</span></td>
+                                    <td class="text-dark">{{ event.note }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td class="ps-4 py-3 font-monospace text-muted">{{ order.created_at.strftime('%d-%b-%Y %I:%M %p') if order.created_at else 'N/A' }}</td>
+                                <td><span class="badge bg-primary-subtle text-primary px-3 py-1">{{ order.order_status }}</span></td>
+                                <td class="text-dark">Order placed successfully and payment confirmed.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-5 text-center">
+            <a href="{{ url_for('orders.order_detail', order_number=order.order_number) }}" class="btn btn-outline-primary rounded-pill px-5 py-2 font-sm">
+                &larr; Back to Order Details
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

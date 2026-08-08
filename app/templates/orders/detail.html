@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Order Details #{{ order.order_number }} - Fancy Store{% endblock %}
+
+{% block content %}
+<div class="container py-4 my-2">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb font-sm">
+            <li class="breadcrumb-item"><a href="{{ url_for('orders.history') }}" class="text-decoration-none">My Orders</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Order #{{ order.order_number }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header Box -->
+    <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 mb-4 bg-surface">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 pb-3 border-bottom mb-4">
+            <div>
+                <span class="badge bg-primary-subtle text-primary fw-bold px-3 py-1 rounded-pill font-xs text-uppercase mb-2">Order Reference</span>
+                <h3 class="fw-extrabold m-0 font-monospace">#{{ order.order_number }}</h3>
+                <div class="text-muted font-sm mt-1">Placed on {{ order.created_at.strftime('%A, %d %B %Y at %I:%M %p') if order.created_at else '' }}</div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <a href="{{ url_for('orders.track_order', order_number=order.order_number) }}" class="btn btn-fancy-primary rounded-pill px-4 font-sm fw-bold shadow-sm">
+                    <i class="fas fa-shipping-fast me-2"></i>Track Shipment
+                </a>
+                <a href="{{ url_for('orders.download_invoice', order_number=order.order_number) }}" target="_blank" class="btn btn-outline-secondary rounded-pill px-4 font-sm fw-bold">
+                    <i class="fas fa-file-pdf me-2"></i>Download GST Invoice
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-5">
+            <!-- Left: Order Items -->
+            <div class="col-lg-8">
+                <h5 class="fw-bold mb-3"><i class="fas fa-box text-primary me-2"></i>Ordered Products ({{ order.items | length }} items)</h5>
+                
+                <div class="table-responsive">
+                    <table class="table align-middle m-0 font-sm">
+                        <thead class="bg-secondary-subtle bg-opacity-25">
+                            <tr>
+                                <th class="py-3 ps-3">Product Name</th>
+                                <th class="py-3 text-center">Unit Price</th>
+                                <th class="py-3 text-center">Qty</th>
+                                <th class="py-3 text-end pe-3">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items %}
+                                <tr>
+                                    <td class="ps-3 py-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <a href="{{ url_for('main.product_detail', slug=item.slug) }}">
+                                                <img src="{{ item.thumbnail }}" alt="{{ item.name }}" class="rounded border object-fit-cover" style="width: 60px; height: 60px;">
+                                            </a>
+                                            <div>
+                                                <a href="{{ url_for('main.product_detail', slug=item.slug) }}" class="text-decoration-none fw-bold text-primary">
+                                                    {{ item.name }}
+                                                </a>
+                                                {% if item.variant %}
+                                                    <div class="font-xs text-muted">Selected Option: <strong>{{ item.variant }}</strong></div>
+                                                {% endif %}
+                                                <div class="mt-1 font-xs">
+                                                    <a href="{{ url_for('main.product_detail', slug=item.slug) }}#reviews-section" class="text-secondary text-decoration-none">
+                                                        <i class="fas fa-star text-warning me-1"></i>Write a Review
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center fw-semibold">{{ item.price | currency }}</td>
+                                    <td class="text-center fw-bold">{{ item.quantity }}</td>
+                                    <td class="text-end pe-3 fw-extrabold text-primary">{{ item.total | currency }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Shipment Status Timeline Summary -->
+                <div class="card border rounded-4 p-4 mt-4 bg-secondary-subtle bg-opacity-10">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold m-0"><i class="fas fa-info-circle text-primary me-2"></i>Current Shipment Status</h6>
+                        <span class="badge {% if order.order_status == 'Delivered' %}bg-success{% elif order.order_status in ['Cancelled', 'Returned'] %}bg-danger{% else %}bg-info text-dark{% endif %} px-3 py-1 font-sm">
+                            {{ order.order_status }}
+                        </span>
+                    </div>
+                    <p class="text-muted font-sm m-0">
+                        {% if order.order_status == 'Delivered' %}
+                            Your parcel was delivered successfully. We hope you love your purchase!
+                        {% elif order.order_status == 'Cancelled' %}
+                            This order was cancelled. If you prepaid via online payment, refund has been initiated to your source account.
+                        {% elif order.order_status == 'Returned' %}
+                            Return request accepted. A courier partner will pick up the item within 24–48 hours.
+                        {% else %}
+                            Your order is currently being processed and prepared for dispatch from our warehouse.
+                        {% endif %}
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- Right: Delivery Address & Actions -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-surface mb-4 font-sm">
+                    <h5 class="fw-bold mb-3 pb-2 border-bottom">Delivery Address</h5>
+                    <div class="fw-bold fs-6 mb-1">{{ order.shipping_address.full_name }}</div>
+                    <div class="text-secondary lh-base mb-2">
+                        {{ order.shipping_address.address_line1 }}{% if order.shipping_address.address_line2 %}, {{ order.shipping_address.address_line2 }}{% endif %}<br>
+                        {{ order.shipping_address.city }}, {{ order.shipping_address.state }} &ndash; <strong>{{ order.shipping_address.postal_code }}</strong>
+                    </div>
+                    <div class="text-muted"><i class="fas fa-phone-alt me-2"></i>{{ order.shipping_address.phone }}</div>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-surface mb-4 font-sm">
+                    <h5 class="fw-bold mb-3 pb-2 border-bottom">Payment Summary</h5>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Payment Mode:</span>
+                        <strong class="text-dark">{{ order.payment_method }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted">Payment Status:</span>
+                        <span class="badge {% if order.payment_status == 'Paid' %}bg-success{% else %}bg-warning text-dark{% endif %} px-2 py-1">
+                            {{ order.payment_status }}
+                        </span>
+                    </div>
+
+                    <hr class="border-secondary-subtle">
+
+                    <div class="d-flex flex-column gap-2 mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Subtotal:</span>
+                            <span>{{ order.subtotal | currency }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Shipping:</span>
+                            <span class="{% if order.shipping_charge == 0 %}text-success{% endif %}">
+                                {% if order.shipping_charge == 0 %}FREE{% else %}{{ order.shipping_charge | currency }}{% endif %}
+                            </span>
+                        </div>
+                        {% if order.discount_amount > 0 %}
+                            <div class="d-flex justify-content-between text-success">
+                                <span>Discount:</span>
+                                <span class="fw-bold">-{{ order.discount_amount | currency }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <hr class="border-secondary-subtle">
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong class="fs-6">Grand Total:</strong>
+                        <strong class="fs-4 text-primary">{{ order.grand_total | currency }}</strong>
+                    </div>
+                </div>
+
+                <!-- Cancel / Return Actions -->
+                {% if order.order_status in ['Pending', 'Processing', 'Shipped'] %}
+                    <div class="card border border-danger-subtle rounded-4 p-4 bg-danger-subtle bg-opacity-10 text-center font-sm">
+                        <h6 class="fw-bold text-danger mb-2">Need to Cancel?</h6>
+                        <p class="text-muted font-xs mb-3">You can cancel this order before it is out for delivery.</p>
+                        <form method="POST" action="{{ url_for('orders.cancel_order', order_number=order.order_number) }}" onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-4 fw-bold w-100">
+                                <i class="fas fa-times-circle me-1"></i>Cancel Order Now
+                            </button>
+                        </form>
+                    </div>
+                {% elif order.order_status == 'Delivered' %}
+                    <div class="card border border-primary-subtle rounded-4 p-4 bg-primary-subtle bg-opacity-10 text-center font-sm">
+                        <h6 class="fw-bold text-primary mb-2">Return or Exchange</h6>
+                        <p class="text-muted font-xs mb-3">Not satisfied? Request an easy doorstep return within 7 days of delivery.</p>
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-4 fw-bold w-100" data-bs-toggle="collapse" data-bs-target="#returnFormCollapse">
+                            <i class="fas fa-undo me-1"></i>Request Return / Exchange
+                        </button>
+
+                        <div class="collapse mt-3 text-start" id="returnFormCollapse">
+                            <form method="POST" action="{{ url_for('orders.return_order', order_number=order.order_number) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <label class="form-label font-xs fw-bold">Reason for Return:</label>
+                                <select name="reason" class="form-select form-select-sm mb-2 font-xs" required>
+                                    <option value="Received damaged / defective item">Received damaged / defective item</option>
+                                    <option value="Size / fit issue">Size / fit issue</option>
+                                    <option value="Item not as described or shown">Item not as described or shown</option>
+                                    <option value="Changed my mind">Changed my mind</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-fancy-primary w-100 rounded-pill font-xs">Submit Request</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,610 @@
+{% extends "base.html" %}
+{% block title %}Secure Checkout - Fancy Store{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<div class="container py-4 my-2">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb font-sm">
+            <li class="breadcrumb-item"><a href="{{ url_for('cart.view_cart') }}" class="text-decoration-none">Cart</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Secure Checkout</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <h2 class="fw-extrabold m-0"><i class="fas fa-lock text-success me-2"></i>Express Secure Checkout</h2>
+        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill font-xs">
+            <i class="fas fa-shield-alt me-1"></i>256-bit SSL Encrypted
+        </span>
+    </div>
+
+    <form method="POST" action="{{ url_for('cart.checkout') }}" id="checkout-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="row g-5">
+            <!-- Left: Address & Payment Gateway -->
+            <div class="col-lg-8">
+
+                <!-- ================= Step 1: Shipping Address ================= -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4 bg-surface">
+                    <h5 class="fw-bold mb-4 pb-2 border-bottom d-flex align-items-center">
+                        <span class="badge bg-primary rounded-circle me-2"
+                            style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">1</span>
+                        Select Delivery Address
+                    </h5>
+
+                    {% if current_user.addresses %}
+                    <div class="row g-3 mb-4">
+                        {% for addr in current_user.addresses %}
+                        <div class="col-md-6">
+                            <label
+                                class="card border p-3 rounded-4 h-100 cursor-pointer transition hover-primary position-relative {% if loop.first %}border-primary bg-primary-subtle bg-opacity-10{% endif %}">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input" type="radio" name="address_index"
+                                        value="{{ loop.index0 }}" {% if loop.first %}checked{% endif %}>
+                                    <span class="fw-bold d-block mb-1">{{ addr.full_name }}</span>
+                                    <div class="font-xs text-muted lh-base">
+                                        {{ addr.address_line1 }}{% if addr.address_line2 %}, {{ addr.address_line2 }}{%
+                                        endif %}<br>
+                                        {{ addr.city }}, {{ addr.state }} - <strong>{{ addr.postal_code }}</strong><br>
+                                        <i class="fas fa-phone-alt me-1 mt-1"></i>{{ addr.phone }}
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Option to use new address -->
+                    <div class="accordion" id="newAddressAccordion">
+                        <div
+                            class="accordion-item border-0 bg-secondary-subtle bg-opacity-10 rounded-4 overflow-hidden">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed font-sm fw-bold bg-transparent" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseNewAddr">
+                                    &plus; Add a New / Alternative Delivery Address
+                                </button>
+                            </h2>
+                            <div id="collapseNewAddr" class="accordion-collapse collapse"
+                                data-bs-parent="#newAddressAccordion">
+                                <div class="accordion-body p-4 border-top">
+                                    <p class="font-xs text-muted mb-3">Note: To use this address, select the radio
+                                        button below and fill out the form.</p>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="radio" name="address_index" value="-1"
+                                            id="useNewAddrRadio">
+                                        <label class="form-check-label fw-bold font-sm text-primary"
+                                            for="useNewAddrRadio">Deliver to this new address below:</label>
+                                    </div>
+
+                                    <div class="row g-3 font-sm">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold font-xs">Full Name *</label>
+                                            <input type="text" name="full_name"
+                                                class="form-control form-control-fancy font-sm"
+                                                placeholder="Recipient's Name">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold font-xs">Phone Number *</label>
+                                            <input type="text" name="phone"
+                                                class="form-control form-control-fancy font-sm"
+                                                placeholder="10-digit mobile number">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label fw-semibold font-xs">Address Line 1 (House No,
+                                                Building, Street) *</label>
+                                            <input type="text" name="address_line1"
+                                                class="form-control form-control-fancy font-sm"
+                                                placeholder="Street address">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label fw-semibold font-xs">Address Line 2 (Area,
+                                                Landmark)</label>
+                                            <input type="text" name="address_line2"
+                                                class="form-control form-control-fancy font-sm"
+                                                placeholder="Apartment, suite, landmark">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-semibold font-xs">City *</label>
+                                            <input type="text" name="city"
+                                                class="form-control form-control-fancy font-sm" placeholder="City">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-semibold font-xs">State *</label>
+                                            <input type="text" name="state"
+                                                class="form-control form-control-fancy font-sm" placeholder="State">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-semibold font-xs">PIN Code *</label>
+                                            <input type="text" name="postal_code"
+                                                class="form-control form-control-fancy font-sm"
+                                                placeholder="6-digit PIN" maxlength="6">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% else %}
+                    <!-- No saved address: force fill -->
+                    <div class="alert alert-info font-sm mb-4">
+                        <i class="fas fa-info-circle me-2"></i>You have no saved addresses. Please enter your delivery
+                        address below:
+                    </div>
+                    <input type="hidden" name="address_index" value="-1">
+                    <div class="row g-3 font-sm">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold font-xs">Full Name *</label>
+                            <input type="text" name="full_name" class="form-control form-control-fancy font-sm"
+                                value="{{ current_user.name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold font-xs">Phone Number *</label>
+                            <input type="text" name="phone" class="form-control form-control-fancy font-sm"
+                                value="{{ current_user.phone }}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold font-xs">Address Line 1 (House No, Building, Street)
+                                *</label>
+                            <input type="text" name="address_line1" class="form-control form-control-fancy font-sm"
+                                placeholder="Street address" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold font-xs">Address Line 2 (Area, Landmark)</label>
+                            <input type="text" name="address_line2" class="form-control form-control-fancy font-sm"
+                                placeholder="Apartment, suite, landmark">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold font-xs">City *</label>
+                            <input type="text" name="city" class="form-control form-control-fancy font-sm" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold font-xs">State *</label>
+                            <input type="text" name="state" class="form-control form-control-fancy font-sm" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold font-xs">PIN Code *</label>
+                            <input type="text" name="postal_code" class="form-control form-control-fancy font-sm"
+                                maxlength="6" required>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- ================= Step 2: 50 KM Booking Radius Verification ================= -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4 bg-surface" id="location-verification-card">
+                    <div class="mb-4 pb-2 border-bottom">
+                        <h5 class="fw-bold m-0 d-flex align-items-center">
+                            <span class="badge bg-primary rounded-circle me-2" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">2</span>
+                            Verify Delivery Area
+                        </h5>
+                    </div>
+
+                    <!-- Hidden coordinate fields submitted with checkout form -->
+                    <input type="hidden" name="delivery_latitude" id="deliveryLat" value="{{ (settings or store_settings or {}).get('store_latitude', 28.6139) }}">
+                    <input type="hidden" name="delivery_longitude" id="deliveryLng" value="{{ (settings or store_settings or {}).get('store_longitude', 77.2090) }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold font-xs text-uppercase text-primary">⚡ Quick Auto-Find Delivery Location by PIN Code or City</label>
+                        <div class="input-group shadow-sm mb-1">
+                            <span class="input-group-text bg-primary text-white border-0"><i class="fas fa-search"></i></span>
+                            <input type="text" id="checkoutSearchInput" class="form-control border-primary fw-semibold font-sm" placeholder="e.g. Alakode, 670571, Connaught Place..." onkeydown="if(event.key==='Enter'){event.preventDefault(); checkoutGeoSearch();}">
+                            <button type="button" class="btn btn-primary fw-bold px-3 font-sm" onclick="checkoutGeoSearch()" id="btnCheckoutSearch">
+                                <i class="fas fa-map-marker-alt me-1"></i>Pop Up on Map
+                            </button>
+                        </div>
+                        <div class="form-text font-xs text-success" id="checkoutSearchStatus"><i class="fas fa-magic me-1"></i>Enter your city name or PIN code and your delivery marker will automatically pop up!</div>
+                    </div>
+
+                    <!-- Interactive Map Container -->
+                    <div id="checkoutDeliveryMap" style="height: 380px; width: 100%; border-radius: 1rem; border: 2px solid #cbd5e1; position: relative; z-index: 5;" class="mb-3 shadow-sm"></div>
+
+                    <!-- Status Display Banner -->
+                    <div id="distanceStatusBanner" class="alert alert-success d-flex flex-wrap align-items-center justify-content-between font-sm mb-3 rounded-3 shadow-sm gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fas fa-check-circle fs-4 text-success" id="statusIcon"></i>
+                            <div>
+                                <strong id="statusTitle" class="d-block">Eligible for Delivery!</strong>
+                                <span id="statusText" class="font-xs">Your delivery location is within our booking boundary.</span>
+                            </div>
+                        </div>
+                        <div class="text-end fw-bold">
+                            <span id="distanceValueDisplay" class="fs-5 text-primary">0.0 KM</span>
+                            <span class="d-block font-xs text-muted">from Store HQ</span>
+                        </div>
+                    </div>
+
+                    <!-- Action buttons & Simulation tools -->
+                    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center bg-light p-3 rounded-3 border">
+                        <div>
+                            <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm" onclick="userDetectGPS()">
+                                <i class="fas fa-location-arrow me-1"></i> Use My Current GPS Location
+                            </button>
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <span class="font-xs text-muted fw-semibold">Test Simulation:</span>
+                            <button type="button" class="btn btn-outline-success btn-sm rounded-pill font-xs px-3 fw-bold" onclick="simulateInside50Km()">
+                                <i class="fas fa-check me-1"></i>Inside Area (5 km)
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill font-xs px-3 fw-bold" onclick="simulateOutside50Km()">
+                                <i class="fas fa-times me-1"></i>Outside Area (65 km)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= Step 3: Payment Gateway Simulator ================= -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-surface">
+                    <h5 class="fw-bold mb-4 pb-2 border-bottom d-flex align-items-center">
+                        <span class="badge bg-primary rounded-circle me-2"
+                            style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">3</span>
+                        Select Payment Method
+                    </h5>
+
+                    <!-- Gateway Radio Tabs -->
+                    <div class="row g-3 mb-4">
+                        <!-- COD -->
+                        <div class="col-12">
+                            <label
+                                class="card border p-3 rounded-4 h-100 cursor-pointer text-center transition hover-primary">
+                                <div class="form-check m-0 d-flex flex-column align-items-center">
+                                    <input class="form-check-input mb-2" type="radio" name="payment_method" value="COD"
+                                        checked>
+                                    <i class="fas fa-money-bill-wave text-success fs-3 mb-2"></i>
+                                    <span class="fw-bold font-sm">Cash on Delivery</span>
+                                    <span class="font-xs text-muted">Pay at door</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Gateway Box: 1. COD -->
+                    <div id="gateway-cod-box" class="p-4 border rounded-4 bg-secondary-subtle bg-opacity-10 font-sm">
+                        <div class="d-flex align-items-center gap-3 text-success fw-bold mb-2">
+                            <i class="fas fa-check-circle fs-4"></i>
+                            <span>Cash on Delivery is available for this order!</span>
+                        </div>
+                        <p class="text-muted font-xs m-0">You can pay using cash, UPI QR code, or card when our courier
+                            executive delivers your parcel to your doorstep.</p>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Right: Order Summary & Place Order Button -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-lg rounded-4 p-4 bg-surface position-sticky" style="top: 90px;">
+                    <h5 class="fw-extrabold mb-3 pb-2 border-bottom">Order Summary ({{ summary.item_count }} items)</h5>
+
+                    <!-- Item Mini List -->
+                    <div class="d-flex flex-column gap-3 mb-4 max-h-60 overflow-y-auto pr-1">
+                        {% for item in summary.cart_items %}
+                        <div class="d-flex align-items-center gap-2 font-xs border-bottom pb-2">
+                            <img src="{{ item.thumbnail }}" class="rounded border object-fit-cover"
+                                style="width: 48px; height: 48px;" alt="Thumb">
+                            <div class="flex-fill overflow-hidden">
+                                <div class="fw-bold text-truncate" title="{{ item.name }}">{{ item.name }}</div>
+                                <div class="text-muted">Qty: {{ item.quantity }}{% if item.variant %} &bull; {{
+                                    item.variant }}{% endif %}</div>
+                            </div>
+                            <div class="fw-bold text-primary text-end">{{ item.total | currency }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Totals Breakdown -->
+                    <div class="d-flex flex-column gap-2 font-sm mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Subtotal:</span>
+                            <span class="fw-semibold">{{ summary.subtotal | currency }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted" id="shippingLabelDisplay">Shipping:</span>
+                            <span id="shippingChargeDisplay" class="fw-semibold text-primary">
+                                Calculating...
+                            </span>
+                        </div>
+                        {% if summary.discount_amount > 0 %}
+                        <div class="d-flex justify-content-between text-success">
+                            <span>Coupon ({{ summary.applied_coupon.code }}):</span>
+                            <span class="fw-bold">-{{ summary.discount_amount | currency }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <hr class="border-secondary-subtle">
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="fs-5 fw-extrabold">Payable Amount:</span>
+                        <span id="grandTotalDisplay" class="display-6 fw-extrabold text-primary">{{ summary.grand_total | currency }}</span>
+                    </div>
+
+                    <!-- Place Order Button -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" id="btn-place-order"
+                            class="btn btn-fancy-primary py-3 fw-bold font-sm shadow-lg">
+                            <i class="fas fa-check-circle me-2"></i>Confirm COD Order
+                        </button>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top text-center font-xs text-muted">
+                        <p class="mb-2"><i class="fas fa-redo-alt text-primary me-1"></i><strong>Easy 7-Day Replacement
+                                Policy</strong></p>
+                        <p class="m-0">By placing this order, you agree to Fancy Store's Terms of Use and Privacy
+                            Policy.</p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const storeLat = parseFloat("{{ (settings or store_settings or {}).get('store_latitude', 28.6139) }}") || 28.6139;
+        const storeLng = parseFloat("{{ (settings or store_settings or {}).get('store_longitude', 77.2090) }}") || 77.2090;
+        const maxRadiusKm = parseFloat("{{ (settings or store_settings or {}).get('max_booking_distance_km', 50.0) }}") || 50.0;
+        let deliveryChargePerKm = parseFloat("{{ (settings or store_settings or {}).get('delivery_charge_per_km', 10.0) }}");
+        if (isNaN(deliveryChargePerKm)) deliveryChargePerKm = 10.0;
+        const baseSubtotal = parseFloat("{{ summary.subtotal - summary.discount_amount }}") || 0.0;
+        const currencySymbol = "{{ (settings or store_settings or {}).get('currency_symbol', '₹') }}";
+
+        // Initialize Map
+        const map = L.map('checkoutDeliveryMap').setView([storeLat, storeLng], 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 18
+        }).addTo(map);
+
+        // Icons
+        const storeIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+        });
+
+        const customerIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+        });
+
+        // Store HQ Marker and Circle
+        L.marker([storeLat, storeLng], {icon: storeIcon, interactive: false})
+         .addTo(map)
+         .bindPopup("<b>🏪 Store Location HQ</b><br>Center of 50 km booking area");
+
+        L.circle([storeLat, storeLng], {
+            color: '#3b82f6',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.12,
+            radius: maxRadiusKm * 1000
+        }).addTo(map);
+
+        // Customer Delivery Marker
+        let customerMarker = L.marker([storeLat, storeLng], {
+            icon: customerIcon,
+            draggable: true
+        }).addTo(map);
+
+        function calcHaversine(lat1, lon1, lat2, lon2) {
+            const R = 6371.0;
+            const dlat = (lat2 - lat1) * Math.PI / 180;
+            const dlon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dlat/2)*Math.sin(dlat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dlon/2)*Math.sin(dlon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function updateDeliveryStatus(lat, lng) {
+            lat = parseFloat(lat.toFixed(6));
+            lng = parseFloat(lng.toFixed(6));
+            document.getElementById('deliveryLat').value = lat;
+            document.getElementById('deliveryLng').value = lng;
+            customerMarker.setLatLng([lat, lng]);
+
+            const dist = calcHaversine(storeLat, storeLng, lat, lng);
+            const distDisplay = document.getElementById('distanceValueDisplay');
+            const banner = document.getElementById('distanceStatusBanner');
+            const icon = document.getElementById('statusIcon');
+            const title = document.getElementById('statusTitle');
+            const text = document.getElementById('statusText');
+            const btnOrder = document.getElementById('btn-place-order');
+
+            distDisplay.innerText = `${dist.toFixed(1)} KM`;
+
+            if (dist <= maxRadiusKm) {
+                banner.className = "alert alert-success d-flex flex-wrap align-items-center justify-content-between font-sm mb-3 rounded-3 shadow-sm gap-2";
+                icon.className = "fas fa-check-circle fs-4 text-success";
+                title.innerText = "Eligible for Delivery!";
+                text.innerText = `Your delivery address is ${dist.toFixed(1)} km away (within our ${maxRadiusKm} km booking area).`;
+                btnOrder.disabled = false;
+                btnOrder.style.opacity = "1";
+                btnOrder.style.cursor = "pointer";
+                customerMarker.bindPopup(`<b>📍 Your Delivery Location</b><br>Distance: ${dist.toFixed(1)} km (Eligible)`).openPopup();
+            } else {
+                banner.className = "alert alert-danger d-flex flex-wrap align-items-center justify-content-between font-sm mb-3 rounded-3 shadow-sm gap-2";
+                icon.className = "fas fa-times-circle fs-4 text-danger";
+                title.innerText = "🚫 Out of Delivery Area";
+                text.innerText = `Your delivery address is ${dist.toFixed(1)} km away. Bookings are only accepted within ${maxRadiusKm} km of Store HQ.`;
+                btnOrder.disabled = true;
+                btnOrder.style.opacity = "0.5";
+                btnOrder.style.cursor = "not-allowed";
+                customerMarker.bindPopup(`<b>🚫 Out of Booking Area</b><br>Distance: ${dist.toFixed(1)} km (Exceeds ${maxRadiusKm} km limit)`).openPopup();
+            }
+
+            // Update shipping cost and grand total dynamically
+            const shippingCost = parseFloat((dist * deliveryChargePerKm).toFixed(2));
+            const grandTotal = parseFloat((baseSubtotal + shippingCost).toFixed(2));
+            
+            const shippingDisplay = document.getElementById('shippingChargeDisplay');
+            const totalDisplay = document.getElementById('grandTotalDisplay');
+            const shippingLabel = document.getElementById('shippingLabelDisplay');
+            
+            if (shippingDisplay && totalDisplay) {
+                if (dist > maxRadiusKm) {
+                    shippingDisplay.innerText = "N/A";
+                    shippingDisplay.className = "fw-semibold text-danger";
+                    if (shippingLabel) shippingLabel.innerText = "Shipping:";
+                    totalDisplay.innerText = "N/A";
+                } else {
+                    if (shippingCost === 0) {
+                        shippingDisplay.innerText = "FREE";
+                        shippingDisplay.className = "fw-semibold text-success";
+                        if (shippingLabel) shippingLabel.innerText = "Shipping:";
+                    } else {
+                        shippingDisplay.innerText = currencySymbol + shippingCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        shippingDisplay.className = "fw-semibold text-primary";
+                        if (shippingLabel) shippingLabel.innerText = `Shipping (${dist.toFixed(1)} km @ ${currencySymbol}${deliveryChargePerKm}/km):`;
+                    }
+                    totalDisplay.innerText = currencySymbol + grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                }
+            }
+        }
+
+        customerMarker.on('dragend', function(e) {
+            const pos = customerMarker.getLatLng();
+            updateDeliveryStatus(pos.lat, pos.lng);
+        });
+
+        map.on('click', function(e) {
+            updateDeliveryStatus(e.latlng.lat, e.latlng.lng);
+            map.panTo(e.latlng);
+        });
+
+        window.userDetectGPS = function() {
+            if ("geolocation" in navigator) {
+                const btn = event.currentTarget;
+                const orig = btn.innerHTML;
+                btn.innerHTML = `<i class="fas fa-spinner fa-spin me-1"></i> Locating...`;
+                btn.disabled = true;
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    updateDeliveryStatus(pos.coords.latitude, pos.coords.longitude);
+                    map.setView([pos.coords.latitude, pos.coords.longitude], 12);
+                    btn.innerHTML = orig;
+                    btn.disabled = false;
+                }, function(err) {
+                    alert("GPS detection failed: " + err.message + ". Please click on the map to place your pin.");
+                    btn.innerHTML = orig;
+                    btn.disabled = false;
+                });
+            } else {
+                alert("Geolocation not supported by this browser.");
+            }
+        };
+
+        window.simulateInside50Km = function() {
+            // Offset roughly ~5 km north
+            const lat = storeLat + 0.045;
+            const lng = storeLng + 0.01;
+            updateDeliveryStatus(lat, lng);
+            map.setView([lat, lng], 11);
+        };
+
+        window.simulateOutside50Km = function() {
+            // Offset roughly ~65 km north-east
+            const lat = storeLat + 0.55;
+            const lng = storeLng + 0.55;
+            updateDeliveryStatus(lat, lng);
+            map.setView([lat, lng], 9);
+        };
+
+        // Prevent checkout submission if out of range
+        document.getElementById('checkout-form').addEventListener('submit', function(e) {
+            const lat = parseFloat(document.getElementById('deliveryLat').value);
+            const lng = parseFloat(document.getElementById('deliveryLng').value);
+            const dist = calcHaversine(storeLat, storeLng, lat, lng);
+            if (dist > maxRadiusKm) {
+                e.preventDefault();
+                alert(`🚫 Booking Failed: Your delivery address is ${dist.toFixed(1)} km away from our store. Bookings are strictly restricted to within our ${maxRadiusKm} km delivery area.`);
+                document.getElementById('location-verification-card').scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+
+        // Initialize status with default inside range
+        updateDeliveryStatus(storeLat, storeLng);
+
+        // ================= Automatic Geocoding by PIN Code or City Name =================
+        window.checkoutGeoSearch = function(queryText) {
+            const searchEl = document.getElementById('checkoutSearchInput');
+            const pinEl = document.getElementsByName('postal_code')[0];
+            const cityEl = document.getElementsByName('city')[0];
+            const query = queryText || (searchEl ? searchEl.value : '') || (pinEl ? pinEl.value : '') || (cityEl ? cityEl.value : '');
+            if (!query || query.trim().length < 2) {
+                alert("Please enter a valid PIN code or location name to search.");
+                return;
+            }
+            const statusEl = document.getElementById('checkoutSearchStatus');
+            const btn = document.getElementById('btnCheckoutSearch');
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Pop...'; }
+            if (statusEl) { statusEl.className = "form-text font-xs text-primary"; statusEl.innerHTML = `<i class="fas fa-spinner fa-spin me-1"></i> Looking up delivery coordinates for "<b>${query}</b>"...`; }
+
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`, {
+                headers: { 'Accept-Language': 'en-US,en;q=0.9' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-map-marker-alt me-1"></i>Pop Up on Map'; }
+                if (data && data.length > 0) {
+                    const resLat = parseFloat(data[0].lat);
+                    const resLng = parseFloat(data[0].lon);
+                    const placeName = data[0].display_name;
+
+                    updateDeliveryStatus(resLat, resLng);
+                    map.setView([resLat, resLng], 12);
+                    customerMarker.bindPopup(`<b>📍 Popped Up Delivery Location: ${query}</b><br><span style="font-size:11px;">${placeName}</span>`).openPopup();
+
+                    if (statusEl) {
+                        statusEl.className = "form-text font-xs text-success fw-bold";
+                        statusEl.innerHTML = `<i class="fas fa-check-circle me-1"></i> Successfully popped up <b>${query}</b> on the delivery map!`;
+                    }
+                } else {
+                    if (statusEl) {
+                        statusEl.className = "form-text font-xs text-danger";
+                        statusEl.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> Could not find coordinates for "<b>${query}</b>". Try adding state/country or check spelling.`;
+                    }
+                }
+            })
+            .catch(err => {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-map-marker-alt me-1"></i>Pop Up on Map'; }
+                if (statusEl) {
+                    statusEl.className = "form-text font-xs text-danger";
+                    statusEl.innerHTML = `<i class="fas fa-exclamation-circle me-1"></i> Error searching location: ${err.message}`;
+                }
+            });
+        };
+
+        // Auto debounce search when customer types PIN code or city in Step 1
+        const pinField = document.getElementsByName('postal_code')[0];
+        if (pinField) {
+            let pinTimer;
+            pinField.addEventListener('input', function() {
+                const val = this.value.trim();
+                clearTimeout(pinTimer);
+                if (val.length >= 5) {
+                    pinTimer = setTimeout(() => { checkoutGeoSearch(val); }, 1000);
+                }
+            });
+        }
+        const cityField = document.getElementsByName('city')[0];
+        if (cityField) {
+            let cityTimer;
+            cityField.addEventListener('change', function() {
+                const val = this.value.trim();
+                if (val.length >= 3) {
+                    checkoutGeoSearch(val);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

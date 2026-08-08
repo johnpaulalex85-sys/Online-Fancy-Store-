@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+{% block title %}My Profile & Account Settings - Fancy Store{% endblock %}
+
+{% block content %}
+<div class="container py-5 my-3">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb font-sm">
+            <li class="breadcrumb-item active" aria-current="page">My Account</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <!-- Sidebar Profile Card -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-center bg-surface h-100">
+                <div class="position-relative mx-auto mb-3" style="width: 100px; height: 100px;">
+                    {% if current_user.profile_pic %}
+                        <img src="{{ current_user.profile_pic }}" alt="Avatar" class="w-100 h-100 rounded-circle object-fit-cover shadow-sm border border-2 border-primary" onerror="this.src='https://ui-avatars.com/api/?name={{ current_user.name | urlencode }}&background=2563eb&color=fff'">
+                    {% else %}
+                        <div class="w-100 h-100 rounded-circle bg-primary d-flex align-items-center justify-content-center text-white display-5 fw-bold shadow-sm">
+                            {{ current_user.name[0] | upper }}
+                        </div>
+                    {% endif %}
+                    <span class="position-absolute bottom-0 end-0 bg-success border border-white border-2 rounded-circle p-2" title="Active Account"></span>
+                </div>
+                <h4 class="fw-bold mb-1">{{ current_user.name }}</h4>
+                <p class="text-muted font-sm mb-3">{{ current_user.email }}</p>
+                
+                <div class="d-flex justify-content-center gap-2 mb-4">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill font-xs">
+                        <i class="fas fa-gem me-1"></i>Fancy Gold Member
+                    </span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill font-xs">
+                        <i class="fas fa-check-circle me-1"></i>Verified
+                    </span>
+                </div>
+
+                <hr class="border-secondary-subtle">
+
+                <div class="text-start font-sm">
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted"><i class="fas fa-phone me-2"></i>Phone:</span>
+                        <span class="fw-medium">{{ current_user.phone or 'Not provided' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted"><i class="fas fa-map-marker-alt me-2"></i>Saved Addresses:</span>
+                        <span class="fw-medium">{{ current_user.addresses | length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted"><i class="fas fa-history me-2"></i>Member Since:</span>
+                        <span class="fw-medium">{{ current_user.created_at.strftime('%b %Y') if current_user.created_at else 'Recent' }}</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top d-grid">
+                    <a href="{{ url_for('orders.history') }}" class="btn btn-outline-primary rounded-pill py-2">
+                        <i class="fas fa-box-open me-2"></i>View Order History
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Tabs -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 bg-surface p-4">
+                
+                <!-- Nav Tabs -->
+                <ul class="nav nav-pills nav-pills-custom mb-4 border-bottom pb-3" id="profileTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info-pane" type="button" role="tab">
+                            <i class="fas fa-user-edit"></i> Personal Details
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="address-tab" data-bs-toggle="tab" data-bs-target="#address-pane" type="button" role="tab">
+                            <i class="fas fa-address-book"></i> Address Book ({{ current_user.addresses | length }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pwd-tab" data-bs-toggle="tab" data-bs-target="#pwd-pane" type="button" role="tab">
+                            <i class="fas fa-shield-alt"></i> Security & Password
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="profileTabContent">
+                    
+                    <!-- 1. Personal Details Pane -->
+                    <div class="tab-pane fade show active" id="info-pane" role="tabpanel">
+                        <h5 class="fw-bold mb-4">Update Personal Details</h5>
+                        <form method="POST" action="{{ url_for('auth.profile') }}">
+                            {{ profile_form.hidden_tag() }}
+                            <input type="hidden" name="submit_profile" value="1">
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold font-sm">{{ profile_form.name.label.text }}</label>
+                                    {{ profile_form.name(class="form-control form-control-fancy") }}
+                                    {% if profile_form.name.errors %}
+                                        <div class="text-danger font-xs mt-1">{{ profile_form.name.errors[0] }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold font-sm">{{ profile_form.phone.label.text }}</label>
+                                    {{ profile_form.phone(class="form-control form-control-fancy") }}
+                                    {% if profile_form.phone.errors %}
+                                        <div class="text-danger font-xs mt-1">{{ profile_form.phone.errors[0] }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold font-sm">{{ profile_form.profile_pic.label.text }}</label>
+                                {{ profile_form.profile_pic(class="form-control form-control-fancy", placeholder="e.g. https://example.com/photo.jpg") }}
+                                <div class="form-text font-xs">Provide a valid web URL for your profile avatar image.</div>
+                            </div>
+
+                            <button type="submit" class="btn btn-fancy-primary px-5">
+                                <i class="fas fa-save me-2"></i>Save Personal Details
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- 2. Address Book Pane -->
+                    <div class="tab-pane fade" id="address-pane" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="fw-bold m-0">Saved Delivery Addresses</h5>
+                            <button type="button" class="btn btn-sm btn-fancy-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                                <i class="fas fa-plus me-1"></i>Add New Address
+                            </button>
+                        </div>
+
+                        {% if current_user.addresses %}
+                            <div class="row g-3">
+                                {% for addr in current_user.addresses %}
+                                    <div class="col-md-6">
+                                        <div class="card h-100 border rounded-4 p-3 {% if addr.is_default %}border-primary bg-primary-subtle bg-opacity-10{% endif %}">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <span class="badge {% if addr.label == 'Home' %}bg-primary{% elif addr.label == 'Work' %}bg-info{% else %}bg-secondary{% endif %} font-xs">
+                                                    {{ addr.label }}
+                                                </span>
+                                                {% if addr.is_default %}
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle font-xs">
+                                                        <i class="fas fa-check me-1"></i>Default
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="fw-bold font-sm text-primary mb-1">{{ addr.full_name }}</div>
+                                            <div class="text-muted font-xs mb-2">
+                                                {{ addr.address_line1 }}<br>
+                                                {% if addr.address_line2 %}{{ addr.address_line2 }}<br>{% endif %}
+                                                {{ addr.city }}, {{ addr.state }} - <strong>{{ addr.postal_code }}</strong><br>
+                                                <i class="fas fa-phone-alt me-1 text-primary"></i> {{ addr.phone }}
+                                            </div>
+
+                                            <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">
+                                                {% if not addr.is_default %}
+                                                    <form method="POST" action="{{ url_for('auth.set_default_address', index=loop.index0) }}" class="m-0">
+                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                        <button type="submit" class="btn btn-link p-0 text-decoration-none font-xs text-primary">Set as Default</button>
+                                                    </form>
+                                                {% else %}
+                                                    <span class="font-xs text-muted">Primary Address</span>
+                                                {% endif %}
+
+                                                <form method="POST" action="{{ url_for('auth.delete_address', index=loop.index0) }}" class="m-0" onsubmit="return confirm('Delete this address from your address book?');">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                    <button type="submit" class="btn btn-link p-0 text-decoration-none font-xs text-danger">
+                                                        <i class="fas fa-trash-alt me-1"></i>Remove
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5 border rounded-4 bg-secondary-subtle bg-opacity-25">
+                                <i class="fas fa-map-marked-alt text-muted display-4 mb-3"></i>
+                                <h6 class="fw-bold">No Saved Addresses Found</h6>
+                                <p class="text-muted font-sm mb-3">Add a shipping address to speed up your checkout process.</p>
+                                <button type="button" class="btn btn-sm btn-fancy-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                                    <i class="fas fa-plus me-1"></i>Add Your First Address
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- 3. Security & Password Pane -->
+                    <div class="tab-pane fade" id="pwd-pane" role="tabpanel">
+                        <h5 class="fw-bold mb-2">Change Account Password</h5>
+                        <p class="text-muted font-sm mb-4">Ensure your account is using a long, random password to stay secure.</p>
+
+                        <form method="POST" action="{{ url_for('auth.profile') }}" class="max-w-md">
+                            {{ password_form.hidden_tag() }}
+                            <input type="hidden" name="submit_password" value="1">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold font-sm">{{ password_form.current_password.label.text }}</label>
+                                {{ password_form.current_password(class="form-control form-control-fancy") }}
+                                {% if password_form.current_password.errors %}
+                                    <div class="text-danger font-xs mt-1">{{ password_form.current_password.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold font-sm">{{ password_form.new_password.label.text }}</label>
+                                    {{ password_form.new_password(class="form-control form-control-fancy") }}
+                                    {% if password_form.new_password.errors %}
+                                        <div class="text-danger font-xs mt-1">{{ password_form.new_password.errors[0] }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold font-sm">{{ password_form.confirm_password.label.text }}</label>
+                                    {{ password_form.confirm_password(class="form-control form-control-fancy") }}
+                                    {% if password_form.confirm_password.errors %}
+                                        <div class="text-danger font-xs mt-1">{{ password_form.confirm_password.errors[0] }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-fancy-primary px-5">
+                                <i class="fas fa-key me-2"></i>Update Password
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add New Address -->
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden bg-surface">
+            <div class="modal-header bg-primary text-white p-4">
+                <h5 class="modal-title fw-bold"><i class="fas fa-map-marker-alt me-2"></i>Add New Delivery Address</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form method="POST" action="{{ url_for('auth.profile') }}">
+                {{ address_form.hidden_tag() }}
+                <input type="hidden" name="submit_address" value="1">
+                
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold font-sm">{{ address_form.label.label.text }}</label>
+                            {{ address_form.label(class="form-select form-control-fancy") }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold font-sm">{{ address_form.full_name.label.text }}</label>
+                            {{ address_form.full_name(class="form-control form-control-fancy", placeholder="Recipient Name", value=current_user.name) }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold font-sm">{{ address_form.phone.label.text }}</label>
+                            {{ address_form.phone(class="form-control form-control-fancy", placeholder="10-digit number", value=current_user.phone) }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold font-sm">{{ address_form.address_line1.label.text }}</label>
+                        {{ address_form.address_line1(class="form-control form-control-fancy", placeholder="House no., Building Name, Street Address") }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold font-sm">{{ address_form.address_line2.label.text }}</label>
+                        {{ address_form.address_line2(class="form-control form-control-fancy", placeholder="Area, Locality, Landmark (Optional)") }}
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold font-sm">{{ address_form.city.label.text }}</label>
+                            {{ address_form.city(class="form-control form-control-fancy", placeholder="e.g. Mumbai") }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold font-sm">{{ address_form.state.label.text }}</label>
+                            {{ address_form.state(class="form-control form-control-fancy", placeholder="e.g. Maharashtra") }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold font-sm">{{ address_form.postal_code.label.text }}</label>
+                            {{ address_form.postal_code(class="form-control form-control-fancy", placeholder="e.g. 400001") }}
+                        </div>
+                    </div>
+
+                    <div class="form-check mt-3">
+                        {{ address_form.is_default(class="form-check-input", id="defaultCheck") }}
+                        <label class="form-check-label font-sm text-secondary" for="defaultCheck">
+                            {{ address_form.is_default.label.text }}
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-footer p-3 bg-secondary-subtle bg-opacity-25 border-top">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-fancy-primary rounded-pill px-4">
+                        <i class="fas fa-check me-2"></i>Save Address
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

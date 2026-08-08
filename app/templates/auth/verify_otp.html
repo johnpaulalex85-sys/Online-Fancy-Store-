@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Verify OTP - Fancy Store{% endblock %}
+
+{% block content %}
+<div class="container py-5 my-3">
+    <div class="row justify-content-center">
+        <div class="col-lg-5 col-md-7 col-sm-9">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-surface">
+                
+                <!-- Card Header -->
+                <div class="p-4 text-center bg-primary-subtle">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle mb-3" style="width: 56px; height: 56px; font-size: 1.5rem;">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">Verify Your Email</h4>
+                    <p class="font-sm text-muted mb-0">
+                        We've sent a 6-digit verification code to your email address. Enter it below to proceed.
+                    </p>
+                </div>
+
+                <!-- Card Body -->
+                <div class="p-4 p-md-5">
+                    <form method="POST" action="{{ url_for('auth.verify_otp') }}">
+                        {{ form.hidden_tag() }}
+
+                        <!-- OTP Field -->
+                        <div class="mb-4">
+                            <label for="otp" class="form-label fw-semibold font-sm text-center d-block">
+                                {{ form.otp.label.text }}
+                            </label>
+                            {{ form.otp(class="form-control form-control-fancy text-center fs-3 letter-spacing-5", placeholder="------", autofocus=true, maxlength="6") }}
+                            {% if form.otp.errors %}
+                                <div class="text-danger font-xs mt-1 text-center">
+                                    {% for error in form.otp.errors %}
+                                        <div><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid mt-2">
+                            {{ form.submit(class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm") }}
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none text-muted font-sm hover-primary transition">
+                                <i class="fas fa-redo-alt me-1"></i>Didn't receive code? Resend
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

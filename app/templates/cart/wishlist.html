@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}My Wishlist ({{ products | length }} items) - Fancy Store{% endblock %}
+
+{% block content %}
+<div class="container py-4 my-2">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb font-sm">
+            <li class="breadcrumb-item active" aria-current="page">My Wishlist</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-extrabold m-0"><i class="fas fa-heart text-danger me-2"></i>My Saved Wishlist</h2>
+            <p class="text-muted font-sm m-0">Products you've saved for later or to watch for price drops.</p>
+        </div>
+        {% if products %}
+            <a href="{{ url_for('main.catalog') }}" class="btn btn-outline-primary rounded-pill px-4 font-sm">
+                &plus; Add More Items
+            </a>
+        {% endif %}
+    </div>
+
+    {% if products %}
+        <div class="row g-4">
+            {% for prod in products %}
+                <div class="col-lg-3 col-md-4 col-sm-6" id="wishlist-col-{{ prod.id }}">
+                    {% include "partials/product_card.html" %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-surface my-4">
+            <div class="py-4">
+                <i class="far fa-heart text-muted display-2 mb-3"></i>
+                <h3 class="fw-bold mb-2">Your Wishlist is Empty</h3>
+                <p class="text-muted font-sm max-w-md mx-auto mb-4">
+                    Save items you love by clicking the heart icon on any product card while exploring our catalog!
+                </p>
+                <a href="{{ url_for('main.catalog') }}" class="btn btn-fancy-primary rounded-pill px-5 py-3 fw-bold">
+                    <i class="fas fa-search me-2"></i>Discover Products Now
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends "admin_base.html" %}
+{% block title %}Manage Promo Coupons - Fancy Admin{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Left: Add Coupon Form -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white font-sm sticky-top" style="top: 90px;">
+            <h5 class="fw-bold mb-4 pb-2 border-bottom"><i class="fas fa-ticket-alt text-success me-2"></i>Create Promo Coupon</h5>
+            
+            <form method="POST" novalidate>
+                {{ form.hidden_tag() }}
+
+                <div class="mb-3">
+                    {{ form.code.label(class="form-label fw-bold") }}
+                    {{ form.code(class="form-control font-monospace text-uppercase" + (" is-invalid" if form.code.errors else ""), placeholder="e.g., WELCOME50, DIWALI20") }}
+                    {% for err in form.code.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.description.label(class="form-label fw-bold") }}
+                    {{ form.description(class="form-control", placeholder="e.g., Flat 20% off on electronics") }}
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        {{ form.discount_type.label(class="form-label fw-bold") }}
+                        {{ form.discount_type(class="form-select") }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.discount_value.label(class="form-label fw-bold") }}
+                        {{ form.discount_value(class="form-control" + (" is-invalid" if form.discount_value.errors else ""), placeholder="20") }}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        {{ form.min_order_value.label(class="form-label fw-bold") }}
+                        {{ form.min_order_value(class="form-control", placeholder="499") }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.max_uses.label(class="form-label fw-bold") }}
+                        {{ form.max_uses(class="form-control", placeholder="100") }}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    {{ form.status.label(class="form-label fw-bold") }}
+                    {{ form.status(class="form-select") }}
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 rounded-pill py-2 fw-bold">Save Promo Code</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right: Coupons Table -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <h5 class="fw-bold mb-4 pb-2 border-bottom"><i class="fas fa-percent text-success me-2"></i>Active Discount Codes ({{ coupons | length }})</h5>
+            
+            <div class="table-responsive font-sm">
+                <table class="table table-hover align-middle m-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="py-3">Coupon Code</th>
+                            <th class="py-3">Discount</th>
+                            <th class="py-3">Min Order</th>
+                            <th class="py-3 text-center">Usage Limit</th>
+                            <th class="py-3 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if coupons %}
+                            {% for c in coupons %}
+                                <tr>
+                                    <td>
+                                        <div class="font-monospace fw-extrabold text-success fs-6">{{ c.code }}</div>
+                                        <div class="font-xs text-muted">{{ c.description }}</div>
+                                    </td>
+                                    <td class="fw-bold">
+                                        {% if c.discount_type == 'percentage' %}{{ c.discount_value }}% OFF{% else %}{{ c.discount_value | currency }} OFF{% endif %}
+                                    </td>
+                                    <td>{{ c.min_order_value | currency }}</td>
+                                    <td class="text-center">{{ c.used_count }} / {{ c.max_uses }}</td>
+                                    <td class="text-center">
+                                        {% if c.status == 'active' %}
+                                            <span class="badge bg-success px-3 py-1 rounded-pill font-xs">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary px-3 py-1 rounded-pill font-xs">Expired</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">No promotional coupon codes created yet.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

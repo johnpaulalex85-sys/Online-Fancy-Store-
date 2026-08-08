@@ -1,0 +1,165 @@
+{% extends "admin_base.html" %}
+{% block title %}{{ title }} - Fancy Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-extrabold m-0">{{ title }}</h2>
+        <p class="text-muted font-sm m-0">Enter product specifications, pricing details, and media URLs.</p>
+    </div>
+    <a href="{{ url_for('admin.products_list') }}" class="btn btn-outline-secondary rounded-pill px-4 fw-bold font-sm">
+        &larr; Back to Products
+    </a>
+</div>
+
+<form method="POST" enctype="multipart/form-data" novalidate class="row g-4">
+    {{ form.hidden_tag() }}
+
+    <!-- Left Column: Core Details -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4 font-sm">
+            <h5 class="fw-bold mb-4 pb-2 border-bottom"><i class="fas fa-info-circle text-primary me-2"></i>Basic Information</h5>
+
+            <div class="mb-3">
+                {{ form.name.label(class="form-label fw-bold") }}
+                {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), placeholder="e.g., Apple iPhone 15 Pro Max (256GB)") }}
+                {% for err in form.name.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-12">
+                    {{ form.brand.label(class="form-label fw-bold") }}
+                    {{ form.brand(class="form-control" + (" is-invalid" if form.brand.errors else ""), placeholder="e.g., Apple, Samsung, Nike") }}
+                    {% for err in form.brand.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                {{ form.short_description.label(class="form-label fw-bold") }}
+                {{ form.short_description(class="form-control", rows="2", placeholder="Brief highlight for catalog cards...") }}
+            </div>
+
+            <div class="mb-3">
+                {{ form.description.label(class="form-label fw-bold") }}
+                {{ form.description(class="form-control", rows="6", placeholder="Full technical specifications and feature breakdown...") }}
+            </div>
+
+            <div class="mb-3">
+                {{ form.variants.label(class="form-label fw-bold") }}
+                {{ form.variants(class="form-control", placeholder="Comma-separated options, e.g.: 128GB, 256GB, 512GB or Midnight Black, Alpine Green") }}
+                <div class="form-text font-xs">Customer can select one option from this list before adding to cart.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Pricing, Inventory & Media -->
+    <div class="col-lg-4">
+        <!-- Pricing & Organization -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4 font-sm">
+            <h5 class="fw-bold mb-4 pb-2 border-bottom"><i class="fas fa-tags text-success me-2"></i>Pricing &amp; Catalog</h5>
+
+            <div class="mb-3">
+                {{ form.category_id.label(class="form-label fw-bold") }}
+                {{ form.category_id(class="form-select" + (" is-invalid" if form.category_id.errors else "")) }}
+                {% for err in form.category_id.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    {{ form.regular_price.label(class="form-label fw-bold") }}
+                    <div class="input-group">
+                        <span class="input-group-text bg-light">₹</span>
+                        {{ form.regular_price(class="form-control" + (" is-invalid" if form.regular_price.errors else ""), placeholder="0.00") }}
+                    </div>
+                    {% for err in form.regular_price.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+                </div>
+                <div class="col-md-6">
+                    {{ form.discount.label(class="form-label fw-bold") }}
+                    <div class="input-group">
+                        {{ form.discount(class="form-control", placeholder="0") }}
+                        <span class="input-group-text bg-light">%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    {{ form.stock_quantity.label(class="form-label fw-bold") }}
+                    {{ form.stock_quantity(class="form-control" + (" is-invalid" if form.stock_quantity.errors else ""), placeholder="10") }}
+                    {% for err in form.stock_quantity.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+                </div>
+                <div class="col-md-6">
+                    {{ form.status.label(class="form-label fw-bold") }}
+                    {{ form.status(class="form-select") }}
+                </div>
+            </div>
+
+            <div class="form-check mt-3 pt-3 border-top">
+                {{ form.is_featured(class="form-check-input") }}
+                {{ form.is_featured.label(class="form-check-label fw-bold text-dark") }}
+                <div class="form-text font-xs m-0">Featured products appear in the homepage showcase slider.</div>
+            </div>
+        </div>
+
+        <!-- Images & Media -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white font-sm">
+            <h5 class="fw-bold mb-3 pb-2 border-bottom"><i class="fas fa-image text-info me-2"></i>Product Media</h5>
+
+            <div class="mb-3">
+                {{ form.thumbnail.label(class="form-label fw-bold") }} (URL)
+                {{ form.thumbnail(class="form-control mb-2" + (" is-invalid" if form.thumbnail.errors else ""), id="thumbInput", placeholder="https://.../image.jpg") }}
+                {% for err in form.thumbnail.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+
+                {{ form.thumbnail_upload.label(class="form-label fw-bold") }}
+                {{ form.thumbnail_upload(class="form-control" + (" is-invalid" if form.thumbnail_upload.errors else ""), id="thumbUploadInput") }}
+                {% for err in form.thumbnail_upload.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+                
+                <!-- Live Thumbnail Preview -->
+                <div class="mt-2 text-center p-2 border rounded-3 bg-light" id="thumbPreviewBox">
+                    <img src="{{ form.thumbnail.data or 'https://via.placeholder.com/150?text=No+Image' }}" id="thumbPreview" alt="Preview" class="rounded object-fit-cover" style="max-height: 120px; max-width: 100%;">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                {{ form.images.label(class="form-label fw-bold") }} (URLs)
+                {{ form.images(class="form-control font-xs mb-2", rows="3", placeholder="Enter additional image URLs separated by newlines or commas...") }}
+                
+                {{ form.gallery_upload.label(class="form-label fw-bold") }}
+                {{ form.gallery_upload(class="form-control font-xs", multiple=True) }}
+                {% for err in form.gallery_upload.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+                <div class="form-text font-xs">These will appear in the product detail photo slider.</div>
+            </div>
+
+            <div class="mt-4 pt-2 border-top">
+                {{ form.submit(class="btn btn-primary w-100 rounded-pill py-3 fw-bold shadow-md") }}
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('thumbInput');
+    const uploadInput = document.getElementById('thumbUploadInput');
+    const preview = document.getElementById('thumbPreview');
+    if (input && preview) {
+        input.addEventListener('input', () => {
+            preview.src = input.value || 'https://via.placeholder.com/150?text=No+Image';
+        });
+    }
+    if (uploadInput && preview) {
+        uploadInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                }
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

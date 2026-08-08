@@ -1,0 +1,68 @@
+/* ==========================================================================
+   Fancy Store - Responsive Styles for Tablet & Mobile Viewports
+   ========================================================================== */
+
+@media (max-width: 991.98px) {
+  .search-container {
+    max-width: 100%;
+    margin: 12px 0;
+    order: 3;
+    width: 100%;
+  }
+  
+  .navbar-fancy .container {
+    flex-wrap: wrap;
+  }
+  
+  .mega-menu-bar {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .nav-pills-custom {
+    flex-wrap: nowrap !important;
+  }
+  
+  .product-title {
+    font-size: 0.9rem;
+    height: 2.6rem;
+  }
+  
+  .price-current {
+    font-size: 1.1rem;
+  }
+  
+  .card-actions {
+    flex-direction: column;
+  }
+  
+  .btn-add-cart,
+  .btn-buy-now {
+    width: 100%;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .brand-logo {
+    font-size: 1.3rem;
+  }
+  
+  .nav-action-btn span {
+    display: none;
+  }
+  
+  .nav-action-btn i {
+    font-size: 1.5rem;
+  }
+  
+  .badge-pulse {
+    top: -2px;
+    right: 2px;
+  }
+  
+  .footer-fancy {
+    padding: 40px 0 20px;
+  }
+}

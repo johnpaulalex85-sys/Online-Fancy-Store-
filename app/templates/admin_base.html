@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Enterprise Admin Dashboard - Fancy Store{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --admin-bg: #0f172a;
+            --admin-sidebar-width: 260px;
+            --admin-accent: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .sidebar {
+            width: var(--admin-sidebar-width);
+            background: var(--admin-bg);
+            color: #94a3b8;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            padding: 1.5rem 1rem;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar .brand-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            padding-left: 0.5rem;
+        }
+
+        .sidebar .nav-link {
+            color: #94a3b8;
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar .nav-link.active {
+            background: var(--admin-accent);
+            font-weight: 600;
+        }
+
+        .sidebar .nav-heading {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin: 1.5rem 0 0.5rem 0.75rem;
+        }
+
+        .main-wrapper {
+            margin-left: var(--admin-sidebar-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        .topbar {
+            height: 70px;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .content-area {
+            padding: 2rem;
+            flex-fill: 1;
+        }
+
+        .card-kpi {
+            border: none;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            background: #fff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+
+        .card-kpi:hover {
+            transform: translateY(-3px);
+        }
+
+        .badge-status {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-wrapper {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ================= Sidebar Navigation ================= -->
+    <aside class="sidebar" id="adminSidebar">
+        <a href="{{ url_for('admin.orders_list') }}" class="brand-logo">
+            <span class="bg-primary text-white rounded-3 p-2 d-inline-flex align-items-center justify-content-center"
+                style="width: 40px; height: 40px;">
+                <i class="fas fa-layer-group"></i>
+            </span>
+            <span>{{ store_settings.get('store_name', 'Fancy Store') }} Admin</span>
+        </a>
+
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if 'orders' in request.endpoint %}active{% endif %}"
+                    href="{{ url_for('admin.orders_list') }}">
+                    <i class="fas fa-shopping-bag w-5"></i> Customer Orders
+                </a>
+            </li>
+
+            {% if current_user.role != 'delivery' %}
+            <li class="nav-item">
+                <a class="nav-link {% if 'subadmins' in request.endpoint %}active{% endif %}"
+                    href="{{ url_for('admin.subadmins_list') }}">
+                    <i class="fas fa-users-cog w-5"></i> Subadmin Management
+                </a>
+            </li>
+            {% endif %}
+
+            {% if current_user.role != 'delivery' %}
+            <div class="nav-heading">Catalog &amp; Inventory</div>
+            <li class="nav-item">
+                <a class="nav-link {% if 'products' in request.endpoint %}active{% endif %}"
+                    href="{{ url_for('admin.products_list') }}">
+                    <i class="fas fa-boxes w-5"></i> Products Catalog
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if 'categories' in request.endpoint %}active{% endif %}"
+                    href="{{ url_for('admin.categories_list') }}">
+                    <i class="fas fa-tags w-5"></i> Categories
+                </a>
+            </li>
+
+            <div class="nav-heading">Store Configuration</div>
+            <li class="nav-item">
+                <a class="nav-link {% if 'location_settings' in request.endpoint %}active{% endif %} text-info fw-bold"
+                    href="{{ url_for('admin.location_settings') }}">
+                    <i class="fas fa-map-marked-alt w-5"></i> Store Location Setup
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if 'settings' in request.endpoint and 'location_settings' not in request.endpoint %}active{% endif %}"
+                    href="{{ url_for('admin.settings') }}">
+                    <i class="fas fa-cog w-5"></i> Global Settings
+                </a>
+            </li>
+            {% endif %}
+
+            <div class="nav-heading">Storefront</div>
+            <li class="nav-item mt-2">
+                <a class="nav-link text-warning" href="{{ url_for('main.index') }}" target="_blank">
+                    <i class="fas fa-external-link-alt w-5"></i> View Live Store &rarr;
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- ================= Main Content Wrapper ================= -->
+    <div class="main-wrapper">
+        <!-- Topbar -->
+        <header class="topbar">
+            <button class="btn btn-light d-lg-none" type="button"
+                onclick="document.getElementById('adminSidebar').classList.toggle('show')">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="d-flex align-items-center gap-3 ms-auto">
+                <span
+                    class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1 rounded-pill fw-bold font-xs">
+                    <i class="fas fa-shield-alt me-1"></i>Administrator Mode
+                </span>
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle d-flex align-items-center gap-2 rounded-pill px-3"
+                        type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle fs-5 text-primary"></i>
+                        <span class="fw-bold font-sm">{{ current_user.name }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2 font-sm">
+                        <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i
+                                    class="fas fa-user-cog me-2"></i>My Profile</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i
+                                    class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Flash Messages -->
+        <div class="px-4 pt-3">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm rounded-4 border-0 mb-3"
+                role="alert">
+                <div class="d-flex align-items-center gap-2">
+                    {% if category == 'success' %}<i class="fas fa-check-circle fs-5"></i>
+                    {% elif category == 'danger' %}<i class="fas fa-exclamation-triangle fs-5"></i>
+                    {% elif category == 'warning' %}<i class="fas fa-exclamation-circle fs-5"></i>
+                    {% else %}<i class="fas fa-info-circle fs-5"></i>{% endif %}
+                    <span>{{ message }}</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Content Area -->
+        <main class="content-area">
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="mt-auto py-3 px-4 border-top text-center text-muted" style="font-size: 0.8rem;">
+            &copy; 2026 Fancy Store India Pvt Ltd. Enterprise Administration Panel &bull; Built with Flask &amp;
+            MongoDB.
+        </footer>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

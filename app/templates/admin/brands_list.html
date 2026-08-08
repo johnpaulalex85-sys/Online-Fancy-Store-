@@ -1,0 +1,86 @@
+{% extends "admin_base.html" %}
+{% block title %}Manage Partner Brands - Fancy Admin{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Left: Add Brand Form -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white font-sm sticky-top" style="top: 90px;">
+            <h5 class="fw-bold mb-4 pb-2 border-bottom"><i class="fas fa-plus-circle text-primary me-2"></i>Add Partner Brand</h5>
+            
+            <form method="POST" novalidate>
+                {{ form.hidden_tag() }}
+
+                <div class="mb-3">
+                    {{ form.name.label(class="form-label fw-bold") }}
+                    {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), placeholder="e.g., Apple, Samsung, Nike") }}
+                    {% for err in form.name.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.logo.label(class="form-label fw-bold") }}
+                    {{ form.logo(class="form-control font-xs", placeholder="https://.../logo.png (optional)") }}
+                </div>
+
+                <div class="mb-4">
+                    {{ form.description.label(class="form-label fw-bold") }}
+                    {{ form.description(class="form-control", rows="3", placeholder="Brand background and warranty notes...") }}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-bold">Save Brand</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right: Brands Table -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <h5 class="fw-bold mb-4 pb-2 border-bottom"><i class="fas fa-award text-primary me-2"></i>Partner Brands ({{ brands | length }})</h5>
+            
+            <div class="table-responsive font-sm">
+                <table class="table table-hover align-middle m-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="py-3" style="width: 70px;">Logo</th>
+                            <th class="py-3">Brand Name &amp; Slug</th>
+                            <th class="py-3">Description</th>
+                            <th class="py-3 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if brands %}
+                            {% for b in brands %}
+                                <tr>
+                                    <td>
+                                        {% if b.logo %}
+                                            <img src="{{ b.logo }}" alt="{{ b.name }}" class="rounded border object-fit-cover p-1 bg-white" style="width: 48px; height: 48px;">
+                                        {% else %}
+                                            <div class="rounded border bg-light d-flex align-items-center justify-content-center fw-bold text-secondary" style="width: 48px; height: 48px;">
+                                                {{ b.name[0] | upper }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark fs-6">{{ b.name }}</div>
+                                        <div class="font-xs text-muted font-monospace">{{ b.slug }}</div>
+                                    </td>
+                                    <td class="text-secondary font-xs">{{ b.description or 'No overview provided.' }}</td>
+                                    <td class="text-end">
+                                        <a href="{{ url_for('main.catalog', brand=b.name) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 font-xs">
+                                            <i class="fas fa-box me-1"></i>Products
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">No brands added yet.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

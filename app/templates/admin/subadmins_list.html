@@ -1,0 +1,97 @@
+{% extends "admin_base.html" %}
+{% block title %}Subadmin Management - {{ store_settings.get('store_name', 'Fancy Store') }} Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-extrabold m-0">Subadmin Management ({{ subadmins | length }})</h2>
+        <p class="text-muted font-sm m-0">Manage subadmins like delivery personnel and their system access credentials.</p>
+    </div>
+    <button class="btn btn-primary fw-bold px-4 rounded-pill shadow-sm" data-bs-toggle="modal"
+        data-bs-target="#addSubAdminModal">
+        <i class="fas fa-plus me-2"></i>Add Subadmin
+    </button>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="table-responsive font-sm">
+        <table class="table table-hover align-middle m-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="py-3">Name</th>
+                    <th class="py-3">Email Address</th>
+                    <th class="py-3">Registered Date</th>
+                    <th class="py-3 text-center">Status</th>
+                    <th class="py-3 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if subadmins %}
+                {% for sub in subadmins %}
+                <tr>
+                    <td>
+                        <div class="fw-bold text-dark fs-6">{{ sub.name }}</div>
+                        <span class="badge bg-info-subtle text-info border border-info-subtle font-xs"><i class="fas fa-motorcycle me-1"></i>Delivery Personnel</span>
+                    </td>
+                    <td class="font-monospace">{{ sub.email }}</td>
+                    <td class="text-muted font-monospace font-xs">{{ sub.created_at.strftime('%d %b %Y') if sub.created_at else 'N/A' }}</td>
+                    <td class="text-center">
+                        <span class="badge bg-success px-3 py-1 rounded-pill font-xs">Active</span>
+                    </td>
+                    <td class="text-center">
+                        <form method="POST" action="{{ url_for('admin.subadmin_delete', admin_id=sub.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this subadmin?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle p-2 shadow-sm" title="Delete Subadmin">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted">No subadmins added yet.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Subadmin Modal -->
+<div class="modal fade" id="addSubAdminModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <form method="POST" action="{{ url_for('admin.subadmins_list') }}">
+                {{ form.hidden_tag() }}
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-users-cog text-primary me-2"></i>Add Subadmin</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label fw-bold font-sm") }}
+                        {{ form.name(class="form-control form-control-fancy") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.email.label(class="form-label fw-bold font-sm") }}
+                        {{ form.email(class="form-control form-control-fancy") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.password.label(class="form-label fw-bold font-sm") }}
+                        {{ form.password(class="form-control form-control-fancy", type="password") }}
+                    </div>
+                    <div class="mb-3 d-none">
+                        {{ form.role.label(class="form-label fw-bold font-sm") }}
+                        {{ form.role(class="form-select form-control-fancy") }}
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light fw-bold rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                    {{ form.submit(class="btn btn-primary fw-bold rounded-pill shadow-sm px-4") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

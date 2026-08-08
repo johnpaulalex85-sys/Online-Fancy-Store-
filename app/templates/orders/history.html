@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}My Order History - Fancy Store{% endblock %}
+
+{% block content %}
+<div class="container py-4 my-2">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb font-sm">
+            <li class="breadcrumb-item"><a href="{{ url_for('auth.profile') }}" class="text-decoration-none">My Account</a></li>
+            <li class="breadcrumb-item active" aria-current="page">My Orders</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-extrabold m-0"><i class="fas fa-box-open text-primary me-2"></i>My Order History</h2>
+            <p class="text-muted font-sm m-0">Track active shipments, view past purchases, and download GST tax invoices.</p>
+        </div>
+        <a href="{{ url_for('main.catalog') }}" class="btn btn-outline-primary rounded-pill px-4 font-sm">
+            &plus; Browse More Products
+        </a>
+    </div>
+
+    {% if orders %}
+        <div class="d-flex flex-column gap-4">
+            {% for order in orders %}
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-surface transition hover-shadow">
+                    <!-- Order Header -->
+                    <div class="card-header bg-secondary-subtle bg-opacity-25 p-4 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-3 font-sm">
+                        <div class="d-flex flex-wrap gap-4 align-items-center">
+                            <div>
+                                <span class="text-muted d-block font-xs text-uppercase">Order Placed</span>
+                                <strong class="text-dark">{{ order.created_at.strftime('%d %b %Y') if order.created_at else '' }}</strong>
+                            </div>
+                            <div>
+                                <span class="text-muted d-block font-xs text-uppercase">Total Amount</span>
+                                <strong class="text-primary fs-6">{{ order.grand_total | currency }}</strong>
+                            </div>
+                            <div>
+                                <span class="text-muted d-block font-xs text-uppercase">Ship To</span>
+                                <strong class="text-dark">{{ order.shipping_address.full_name }}</strong>
+                            </div>
+                            <div>
+                                <span class="text-muted d-block font-xs text-uppercase">Order Reference</span>
+                                <strong class="text-dark font-monospace">#{{ order.order_number }}</strong>
+                            </div>
+                        </div>
+
+                        <!-- Status Badge -->
+                        <div>
+                            {% if order.order_status == 'Delivered' %}
+                                <span class="badge bg-success px-3 py-2 rounded-pill font-sm"><i class="fas fa-check-circle me-1"></i>Delivered</span>
+                            {% elif order.order_status == 'Shipped' or order.order_status == 'Out for Delivery' %}
+                                <span class="badge bg-info text-dark px-3 py-2 rounded-pill font-sm"><i class="fas fa-truck me-1"></i>{{ order.order_status }}</span>
+                            {% elif order.order_status == 'Cancelled' or order.order_status == 'Returned' %}
+                                <span class="badge bg-danger px-3 py-2 rounded-pill font-sm"><i class="fas fa-times-circle me-1"></i>{{ order.order_status }}</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill font-sm"><i class="fas fa-clock me-1"></i>{{ order.order_status }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Order Items Preview -->
+                    <div class="card-body p-4">
+                        <div class="row align-items-center g-4">
+                            <div class="col-md-7">
+                                <div class="d-flex flex-wrap gap-3 align-items-center">
+                                    {% for item in order.items[:3] %}
+                                        <div class="d-flex align-items-center gap-2 border rounded-3 p-2 bg-surface" style="max-width: 200px;">
+                                            <img src="{{ item.thumbnail }}" alt="thumb" class="rounded object-fit-cover" style="width: 48px; height: 48px;">
+                                            <div class="overflow-hidden font-xs">
+                                                <div class="fw-bold text-truncate" title="{{ item.name }}">{{ item.name }}</div>
+                                                <div class="text-muted">Qty: {{ item.quantity }}</div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                    {% if order.items | length > 3 %}
+                                        <span class="badge bg-secondary-subtle text-secondary font-xs">+{{ (order.items | length) - 3 }} more items</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-5 d-flex flex-wrap justify-content-md-end gap-2 font-sm">
+                                {% if order.order_status in ['Placed', 'Processing'] %}
+                                <form action="{{ url_for('orders.cancel_order', order_number=order.order_number) }}" method="POST" class="m-0" onsubmit="return confirm('Are you sure you want to cancel this order? Any prepaid amount will be refunded.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold">
+                                        <i class="fas fa-times me-1"></i>Cancel
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <a href="{{ url_for('orders.track_order', order_number=order.order_number) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
+                                    <i class="fas fa-shipping-fast me-1"></i>Track
+                                </a>
+                                <a href="{{ url_for('orders.download_invoice', order_number=order.order_number) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold">
+                                    <i class="fas fa-file-invoice-dollar me-1"></i>Invoice
+                                </a>
+                                <a href="{{ url_for('orders.order_detail', order_number=order.order_number) }}" class="btn btn-sm btn-fancy-primary rounded-pill px-4 fw-bold">
+                                    View Details &rarr;
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-surface my-4">
+            <div class="py-4">
+                <i class="fas fa-shopping-bag text-muted display-2 mb-3"></i>
+                <h3 class="fw-bold mb-2">No Orders Found</h3>
+                <p class="text-muted font-sm max-w-md mx-auto mb-4">
+                    You haven't placed any orders yet. Explore our curated collections and grab amazing deals today!
+                </p>
+                <a href="{{ url_for('main.catalog') }}" class="btn btn-fancy-primary rounded-pill px-5 py-3 fw-bold">
+                    <i class="fas fa-store me-2"></i>Start Shopping
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

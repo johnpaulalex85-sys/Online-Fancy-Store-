@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Invoice #{{ order.order_number }} - Fancy Store</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #111827; margin: 0; padding: 30px; background: #fff; font-size: 14px; line-height: 1.5; }
+        .invoice-box { max-width: 850px; margin: auto; border: 1px solid #e5e7eb; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1e3a8a; padding-bottom: 20px; margin-bottom: 30px; }
+        .brand-title { font-size: 28px; font-weight: 800; color: #1e3a8a; margin: 0; text-transform: uppercase; }
+        .invoice-title { font-size: 24px; font-weight: 700; color: #374151; margin: 0; text-align: right; }
+        .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+        .meta-box h6 { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #6b7280; margin: 0 0 8px 0; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
+        .meta-box p { margin: 0 0 4px 0; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        th { background: #f3f4f6; color: #374151; text-align: left; padding: 12px; font-weight: 700; font-size: 13px; border-bottom: 2px solid #d1d5db; }
+        td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .totals-table { width: 350px; margin-left: auto; margin-bottom: 40px; }
+        .totals-table td { padding: 8px 12px; border: none; }
+        .totals-table .grand-row td { border-top: 2px solid #111827; border-bottom: 2px solid #111827; font-weight: 800; font-size: 16px; color: #1e3a8a; background: #eff6ff; }
+        .footer { border-top: 1px solid #e5e7eb; padding-top: 20px; font-size: 12px; color: #6b7280; display: flex; justify-content: space-between; align-items: flex-end; }
+        @media print {
+            body { padding: 0; background: #fff; }
+            .invoice-box { border: none; box-shadow: none; padding: 0; width: 100%; max-width: 100%; }
+            .no-print { display: none !important; }
+        }
+        .btn-print { background: #1e3a8a; color: #fff; border: none; padding: 10px 20px; font-weight: 700; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="invoice-box">
+        <!-- Print Button Bar -->
+        <div class="no-print" style="margin-bottom: 20px; text-align: right;">
+            <button onclick="window.print()" class="btn-print">&print; Print / Save as PDF</button>
+            <button onclick="window.close()" style="background: #e5e7eb; color: #374151; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-left: 10px;">Close Window</button>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1 class="brand-title">Fancy Store India</h1>
+                <p style="margin: 5px 0 0; color: #4b5563; font-size: 13px;">
+                    100 Premium Retail Blvd, Cyber City<br>
+                    Bangalore, Karnataka 560001, India<br>
+                    <strong>GSTIN:</strong> 29ABCDE1234F1Z5 | <strong>Support:</strong> support@fancystore.in
+                </p>
+            </div>
+            <div>
+                <h2 class="invoice-title">TAX INVOICE</h2>
+                <p style="margin: 5px 0 0; text-align: right; color: #4b5563;">
+                    <strong>Invoice No:</strong> INV-{{ order.order_number }}<br>
+                    <strong>Date:</strong> {{ order.created_at.strftime('%d %b %Y') if order.created_at else '' }}<br>
+                    <strong>Payment Mode:</strong> {{ order.payment_method }} ({{ order.payment_status }})
+                </p>
+            </div>
+        </div>
+
+        <!-- Meta Grid -->
+        <div class="meta-grid">
+            <div class="meta-box">
+                <h6>Billed &amp; Shipped To:</h6>
+                <p><strong>{{ order.shipping_address.full_name }}</strong></p>
+                <p>{{ order.shipping_address.address_line1 }}{% if order.shipping_address.address_line2 %}, {{ order.shipping_address.address_line2 }}{% endif %}</p>
+                <p>{{ order.shipping_address.city }}, {{ order.shipping_address.state }} - {{ order.shipping_address.postal_code }}</p>
+                <p><strong>Phone:</strong> {{ order.shipping_address.phone }}</p>
+            </div>
+            <div class="meta-box">
+                <h6>Shipment Details:</h6>
+                <p><strong>Order Ref:</strong> #{{ order.order_number }}</p>
+                <p><strong>Courier Partner:</strong> BlueDart Express India</p>
+                <p><strong>AWB Tracking ID:</strong> {{ order.tracking_number or 'BLD987654321IN' }}</p>
+                <p><strong>Order Status:</strong> {{ order.order_status }}</p>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40px;">#</th>
+                    <th>Product Description &amp; Specifications</th>
+                    <th class="text-center" style="width: 60px;">Qty</th>
+                    <th class="text-right" style="width: 120px;">Unit Price</th>
+                    <th class="text-right" style="width: 120px;">Total Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                            <strong>{{ item.name }}</strong>
+                            {% if item.variant %}<br><span style="color: #6b7280; font-size: 12px;">Option: {{ item.variant }}</span>{% endif %}
+                        </td>
+                        <td class="text-center">{{ item.quantity }}</td>
+                        <td class="text-right">{{ item.price | currency }}</td>
+                        <td class="text-right" style="font-weight: 700;">{{ item.total | currency }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Totals Table -->
+        <table class="totals-table">
+            <tbody>
+                <tr>
+                    <td>Subtotal:</td>
+                    <td class="text-right">{{ order.subtotal | currency }}</td>
+                </tr>
+                <tr>
+                    <td>Shipping Charge:</td>
+                    <td class="text-right">{% if order.shipping_charge == 0 %}FREE{% else %}{{ order.shipping_charge | currency }}{% endif %}</td>
+                </tr>
+                {% if order.discount_amount > 0 %}
+                    <tr style="color: #10b981;">
+                        <td>Coupon Discount:</td>
+                        <td class="text-right">-{{ order.discount_amount | currency }}</td>
+                    </tr>
+                {% endif %}
+
+                <tr class="grand-row">
+                    <td>GRAND TOTAL:</td>
+                    <td class="text-right">{{ order.grand_total | currency }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div>
+                <p style="margin: 0 0 4px 0;"><strong>Terms &amp; Conditions:</strong></p>
+                <p style="margin: 0;">1. Goods once sold can be returned within 7 days under standard replacement warranty.</p>
+                <p style="margin: 0;">2. All disputes are subject to Bangalore jurisdiction only.</p>
+            </div>
+            <div style="text-align: right;">
+                <p style="margin: 0 0 30px 0; font-weight: 700; color: #374151;">For Fancy Store India Pvt Ltd</p>
+                <p style="margin: 0; border-top: 1px solid #9ca3af; padding-top: 4px; display: inline-block;">Authorized Signatory</p>
+            </div>
+        </div>
+    </div>
+
+    {% if auto_print %}
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { window.print(); }, 500);
+        });
+    </script>
+    {% endif %}
+</body>
+</html>

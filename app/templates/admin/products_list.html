@@ -1,0 +1,137 @@
+{% extends "admin_base.html" %}
+{% block title %}Manage Catalog Products - Fancy Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-extrabold m-0">Products Catalog Inventory</h2>
+        <p class="text-muted font-sm m-0">Manage items, stock quantities, pricing, and visibility status.</p>
+    </div>
+    <a href="{{ url_for('admin.product_add') }}" class="btn btn-primary rounded-pill px-4 fw-bold font-sm shadow-sm">
+        <i class="fas fa-plus me-2"></i>Add New Product
+    </a>
+</div>
+
+<!-- Search & Filters -->
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+    <form method="GET" action="{{ url_for('admin.products_list') }}" class="row g-3 align-items-center">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                <input type="text" name="q" value="{{ query or '' }}" class="form-control border-start-0 bg-light" placeholder="Search products by title, brand, or SKU...">
+            </div>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100 fw-bold font-sm">Search</button>
+        </div>
+        {% if query %}
+        <div class="col-md-2">
+            <a href="{{ url_for('admin.products_list') }}" class="btn btn-outline-danger w-100 fw-bold font-sm">Reset</a>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Products Table -->
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle m-0 font-sm">
+            <thead class="bg-light">
+                <tr>
+                    <th class="py-3" style="width: 70px;">Thumb</th>
+                    <th class="py-3">SKU</th>
+                    <th class="py-3">Product Title &amp; Brand</th>
+                    <th class="py-3 text-end">Price</th>
+                    <th class="py-3 text-center">Stock Level</th>
+                    <th class="py-3 text-center">Status</th>
+                    <th class="py-3 text-end" style="width: 160px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if products %}
+                    {% for prod in products %}
+                        <tr>
+                            <td>
+                                <img src="{{ prod.thumbnail }}" alt="Thumb" class="rounded border object-fit-cover" style="width: 50px; height: 50px;" onerror="this.src='https://via.placeholder.com/50'">
+                            </td>
+                            <td class="font-monospace fw-bold text-muted">{{ prod.sku }}</td>
+                            <td>
+                                <a href="{{ url_for('main.product_detail', slug=prod.slug) }}" target="_blank" class="fw-bold text-primary text-decoration-none d-block">
+                                    {{ prod.name }} <i class="fas fa-external-link-alt font-xs ms-1"></i>
+                                </a>
+                                <span class="badge bg-light text-secondary border font-xs">{{ prod.brand }}</span>
+                                {% if prod.is_featured %}
+                                    <span class="badge bg-warning text-dark font-xs ms-1"><i class="fas fa-star me-1"></i>Featured</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="fw-extrabold text-dark">{{ prod.price | currency }}</div>
+                                {% if prod.discount > 0 %}
+                                    <div class="font-xs text-muted text-decoration-line-through">{{ prod.regular_price | currency }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if prod.stock_quantity <= 0 %}
+                                    <span class="badge bg-danger px-3 py-1 font-xs">Out of Stock</span>
+                                {% elif prod.stock_quantity <= 5 %}
+                                    <span class="badge bg-warning text-dark px-3 py-1 font-xs"><i class="fas fa-exclamation-triangle me-1"></i>Low: {{ prod.stock_quantity }}</span>
+                                {% else %}
+                                    <span class="badge bg-success-subtle text-success border border-success px-3 py-1 font-xs">{{ prod.stock_quantity }} units</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center" style="min-width: 155px;">
+                                <form method="POST" action="{{ url_for('admin.product_update_status', product_id=prod.id) }}" class="m-0">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <select name="status" class="form-select form-select-sm font-xs fw-bold {% if prod.status == 'active' %}text-success border-success-subtle bg-success-subtle{% elif prod.status in ['not_available', 'out_of_stock'] %}text-danger border-danger-subtle bg-danger-subtle{% elif prod.status == 'coming_soon' %}text-info border-info-subtle bg-info-subtle{% elif prod.status == 'draft' %}text-secondary border-secondary-subtle bg-secondary-subtle{% else %}text-dark border-dark-subtle bg-light{% endif %}" onchange="this.form.submit()" title="Change Product Status">
+                                        <option value="active" class="text-success bg-white" {% if prod.status == 'active' %}selected{% endif %}>🟢 Live Active</option>
+                                        <option value="not_available" class="text-danger bg-white" {% if prod.status in ['not_available', 'out_of_stock'] %}selected{% endif %}>🔴 Not Available</option>
+                                        <option value="coming_soon" class="text-info bg-white" {% if prod.status == 'coming_soon' %}selected{% endif %}>🔵 Coming Soon</option>
+                                        <option value="draft" class="text-secondary bg-white" {% if prod.status == 'draft' %}selected{% endif %}>⚫ Draft (Hidden)</option>
+                                        <option value="archived" class="text-dark bg-white" {% if prod.status == 'archived' %}selected{% endif %}>📦 Archived</option>
+                                    </select>
+                                </form>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="{{ url_for('admin.product_edit', product_id=prod.id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <form method="POST" action="{{ url_for('admin.product_delete', product_id=prod.id) }}" onsubmit="return confirm('Are you sure you want to delete / archive this product?');" style="display: inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle p-2" title="Delete Product">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">No products found matching criteria.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <nav aria-label="Catalog pagination" class="mt-4">
+        <ul class="pagination justify-content-center font-sm m-0">
+            <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                <a class="page-link rounded-pill px-3 me-1" href="{{ url_for('admin.products_list', page=current_page-1, q=query) }}">&laquo; Prev</a>
+            </li>
+            {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == current_page %}active{% endif %}">
+                    <a class="page-link rounded-pill px-3 me-1" href="{{ url_for('admin.products_list', page=p, q=query) }}">{{ p }}</a>
+                </li>
+            {% endfor %}
+            <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                <a class="page-link rounded-pill px-3" href="{{ url_for('admin.products_list', page=current_page+1, q=query) }}">Next &raquo;</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "admin_base.html" %}
+{% block title %}Manage Catalog Categories - Fancy Admin{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Left: Add Category Form -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white font-sm sticky-top" style="top: 90px;">
+            <h5 class="fw-bold mb-4 pb-2 border-bottom"><i class="fas fa-plus-circle text-primary me-2"></i>Add Category</h5>
+            
+            <form method="POST" novalidate>
+                {{ form.hidden_tag() }}
+
+                <div class="mb-3">
+                    {{ form.name.label(class="form-label fw-bold") }}
+                    {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), placeholder="e.g., Electronics, Smartphones") }}
+                    {% for err in form.name.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+                </div>
+                <div class="mb-3">
+                    {{ form.parent_id.label(class="form-label fw-bold") }}
+                    {{ form.parent_id(class="form-select") }}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-bold">Save Category</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right: Categories Hierarchy Table -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <h5 class="fw-bold mb-4 pb-2 border-bottom"><i class="fas fa-tags text-primary me-2"></i>Existing Categories ({{ categories | length }})</h5>
+            
+            <div class="table-responsive font-sm">
+                <table class="table table-hover align-middle m-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="py-3" style="width: 60px;">Icon</th>
+                            <th class="py-3" style="width: 70px;">Image</th>
+                            <th class="py-3">Category Name &amp; Slug</th>
+                            <th class="py-3">Parent</th>
+                            <th class="py-3 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if categories %}
+                            {% for cat in categories %}
+                                <tr>
+                                    <td class="text-center fs-5 text-primary">
+                                        <i class="fas {{ cat.icon or 'fa-tag' }}"></i>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if cat.image %}
+                                            <img src="{{ cat.image }}" alt="{{ cat.name }}" class="rounded shadow-sm object-fit-cover" style="width: 45px; height: 35px;" onerror="this.src='https://placehold.co/45x35/eee/999?text=Img'">
+                                        {% else %}
+                                            <span class="badge bg-light text-muted border font-xs">None</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ cat.name }}</div>
+                                        <div class="font-xs text-muted font-monospace">{{ cat.slug }}</div>
+                                    </td>
+                                    <td>
+                                        {% if cat.parent_id %}
+                                            <span class="badge bg-secondary-subtle text-secondary border font-xs">Subcategory</span>
+                                        {% else %}
+                                            <span class="badge bg-primary-subtle text-primary border font-xs">Top Level</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end align-items-center gap-2">
+                                            <a href="{{ url_for('main.catalog', category=cat.slug) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 font-xs">
+                                                <i class="fas fa-external-link-alt me-1"></i>View in Store
+                                            </a>
+                                            <form method="POST" action="{{ url_for('admin.category_delete', category_id=cat.id) }}" onsubmit="return confirm('Are you sure you want to delete this category? Any associated subcategories will also be deleted.');" style="display: inline;">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle p-2 d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Delete Category">
+                                                    <i class="fas fa-trash-alt font-xs"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">No categories created yet. Add one from the left form!</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

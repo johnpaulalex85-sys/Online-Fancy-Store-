@@ -1,0 +1,89 @@
+{% extends "admin_base.html" %}
+{% block title %}Moderate Customer Reviews - Fancy Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-extrabold m-0">Customer Product Reviews Moderation</h2>
+        <p class="text-muted font-sm m-0">Approve, reject, or delete user reviews before they appear on the live storefront.</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle m-0 font-sm">
+            <thead class="bg-light">
+                <tr>
+                    <th class="py-3">Date</th>
+                    <th class="py-3">Product ID / Slug</th>
+                    <th class="py-3">User Details</th>
+                    <th class="py-3 text-center">Rating</th>
+                    <th class="py-3" style="max-width: 300px;">Comment &amp; Headline</th>
+                    <th class="py-3 text-center">Status</th>
+                    <th class="py-3 text-end" style="width: 220px;">Moderation Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if reviews %}
+                    {% for rev in reviews %}
+                        <tr>
+                            <td class="font-monospace font-xs text-muted">{{ rev.created_at.strftime('%d-%b-%Y') if rev.created_at else 'N/A' }}</td>
+                            <td>
+                                <span class="font-monospace fw-bold text-primary">{{ rev.product_slug or rev.product_id }}</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ rev.user_name }}</div>
+                                <div class="font-xs text-muted">{{ rev.user_email }}</div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-warning text-dark font-sm px-2 py-1">
+                                    {{ rev.rating }} <i class="fas fa-star"></i>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ rev.title or '' }}</div>
+                                <div class="text-secondary font-xs text-wrap" style="max-width: 300px;">{{ rev.comment }}</div>
+                            </td>
+                            <td class="text-center">
+                                {% if rev.status == 'approved' %}
+                                    <span class="badge bg-success px-3 py-1 rounded-pill font-xs">Approved</span>
+                                {% elif rev.status == 'rejected' %}
+                                    <span class="badge bg-danger px-3 py-1 rounded-pill font-xs">Rejected</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark px-3 py-1 rounded-pill font-xs">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <form method="POST" action="{{ url_for('admin.reviews_list') }}" class="d-flex justify-content-end gap-1">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="review_id" value="{{ rev._id }}">
+                                    
+                                    {% if rev.status != 'approved' %}
+                                    <button type="submit" name="action" value="approved" class="btn btn-sm btn-outline-success rounded-pill px-2 font-xs" title="Approve">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    {% endif %}
+                                    
+                                    {% if rev.status != 'rejected' %}
+                                    <button type="submit" name="action" value="rejected" class="btn btn-sm btn-outline-warning text-dark rounded-pill px-2 font-xs" title="Reject">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                    {% endif %}
+                                    
+                                    <button type="submit" name="action" value="delete" onclick="return confirm('Delete this review permanently?');" class="btn btn-sm btn-outline-danger rounded-pill px-2 font-xs" title="Delete">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">No customer product reviews submitted yet.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
