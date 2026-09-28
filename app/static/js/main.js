@@ -61,18 +61,18 @@ function initLiveSearch() {
             fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success' && data.suggestions.length > 0) {
-                    renderSuggestions(data.suggestions, suggestionsBox);
-                } else {
-                    suggestionsBox.innerHTML = `<div class="p-3 text-muted text-center font-sm">No matching products found for "${query}"</div>`;
-                    suggestionsBox.style.display = 'block';
-                }
-            })
-            .catch(err => {
-                console.error("Live search error:", err);
-            });
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success' && data.suggestions.length > 0) {
+                        renderSuggestions(data.suggestions, suggestionsBox);
+                    } else {
+                        suggestionsBox.innerHTML = `<div class="p-3 text-muted text-center font-sm">No matching products found for "${query}"</div>`;
+                        suggestionsBox.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.error("Live search error:", err);
+                });
         }, 300);
     });
 
@@ -123,32 +123,32 @@ function initWishlistButtons() {
             },
             body: JSON.stringify({ product_id: productId })
         })
-        .then(res => {
-            if (res.status === 401 || res.status === 403) {
-                showToast("Please log in to save items to your wishlist.", "warning");
-                setTimeout(() => window.location.href = '/auth/login', 1500);
-                return null;
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (!data) return;
-            if (data.status === 'success') {
-                btn.classList.toggle('active', data.in_wishlist);
-                const icon = btn.querySelector('i');
-                if (icon) {
-                    icon.className = data.in_wishlist ? 'fas fa-heart text-danger' : 'far fa-heart';
+            .then(res => {
+                if (res.status === 401 || res.status === 403) {
+                    showToast("Please log in to save items to your wishlist.", "warning");
+                    setTimeout(() => window.location.href = '/auth/login', 1500);
+                    return null;
                 }
-                updateBadgeCount('wishlist-badge', data.wishlist_count);
-                showToast(data.message, 'success');
-            } else {
-                showToast(data.message || "Error updating wishlist", 'danger');
-            }
-        })
-        .catch(err => {
-            console.error("Wishlist toggle error:", err);
-            showToast("Network error. Please try again.", 'danger');
-        });
+                return res.json();
+            })
+            .then(data => {
+                if (!data) return;
+                if (data.status === 'success') {
+                    btn.classList.toggle('active', data.in_wishlist);
+                    const icon = btn.querySelector('i');
+                    if (icon) {
+                        icon.className = data.in_wishlist ? 'fas fa-heart text-danger' : 'far fa-heart';
+                    }
+                    updateBadgeCount('wishlist-badge', data.wishlist_count);
+                    showToast(data.message, 'success');
+                } else {
+                    showToast(data.message || "Error updating wishlist", 'danger');
+                }
+            })
+            .catch(err => {
+                console.error("Wishlist toggle error:", err);
+                showToast("Network error. Please try again.", 'danger');
+            });
     });
 }
 

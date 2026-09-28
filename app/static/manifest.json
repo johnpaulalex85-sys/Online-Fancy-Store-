@@ -1,0 +1,25 @@
+{
+  "name": "Fancy Store - Online Shopping",
+  "short_name": "FancyStore",
+  "description": "Enterprise Flipkart-Style E-Commerce Web App for Electronics, Fashion & Home Goods",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f8fafc",
+  "theme_color": "#1e3a8a",
+  "categories": ["shopping", "lifestyle"],
+  "icons": [
+    {
+      "src": "/static/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

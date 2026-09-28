@@ -74,7 +74,12 @@
                                 <label for="password" class="form-label fw-semibold font-sm">
                                     <i class="fas fa-lock text-primary me-2"></i>{{ form.password.label.text }}
                                 </label>
-                                {{ form.password(class="form-control form-control-fancy", placeholder="••••••••", id="regPwd") }}
+                                <div class="input-group">
+                                    {{ form.password(class="form-control form-control-fancy", placeholder="••••••••", id="regPwd") }}
+                                    <button class="btn btn-outline-secondary border-start-0" type="button" onclick="toggleRegPwd('regPwd', 'toggleRegPwdIcon')">
+                                        <i class="fas fa-eye" id="toggleRegPwdIcon"></i>
+                                    </button>
+                                </div>
                                 {% if form.password.errors %}
                                     <div class="text-danger font-xs mt-1">
                                         {% for error in form.password.errors %}
@@ -87,7 +92,12 @@
                                 <label for="confirm_password" class="form-label fw-semibold font-sm">
                                     <i class="fas fa-check-double text-primary me-2"></i>{{ form.confirm_password.label.text }}
                                 </label>
-                                {{ form.confirm_password(class="form-control form-control-fancy", placeholder="••••••••") }}
+                                <div class="input-group">
+                                    {{ form.confirm_password(class="form-control form-control-fancy", placeholder="••••••••", id="regConfirmPwd") }}
+                                    <button class="btn btn-outline-secondary border-start-0" type="button" onclick="toggleRegPwd('regConfirmPwd', 'toggleRegConfirmPwdIcon')">
+                                        <i class="fas fa-eye" id="toggleRegConfirmPwdIcon"></i>
+                                    </button>
+                                </div>
                                 {% if form.confirm_password.errors %}
                                     <div class="text-danger font-xs mt-1">
                                         {% for error in form.confirm_password.errors %}
@@ -133,4 +143,20 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleRegPwd(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+</script>
 {% endblock %}

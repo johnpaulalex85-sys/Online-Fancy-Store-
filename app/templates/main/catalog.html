@@ -1,52 +1,30 @@
 {% extends "base.html" %}
 {% block title %}
-    {% if selected_category %}
-        {{ selected_category.name }} - Fancy Store Catalog
-    {% elif query %}
-        Search Results for "{{ query }}" - Fancy Store
-    {% else %}
-        All Products Catalog - Fancy Store
-    {% endif %}
+{% if selected_category %}{{ selected_category.name }} Catalog{% elif query %}Search Results for "{{ query }}"{% else %}Product Catalog{% endif %} - Fancy Store
 {% endblock %}
 
 {% block content %}
-<div class="container py-4 my-2">
+<div class="container">
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb font-sm">
-            <li class="breadcrumb-item"><a href="{{ url_for('main.catalog') }}" class="text-decoration-none">All Products</a></li>
+        <ol class="breadcrumb font-sm fw-semibold">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.catalog') }}">All Products</a></li>
             {% if selected_category %}
-                <li class="breadcrumb-item active" aria-current="page">{{ selected_category.name }}</li>
+            <li class="breadcrumb-item active" aria-current="page">{{ selected_category.name }}</li>
             {% elif query %}
-                <li class="breadcrumb-item active" aria-current="page">Search: "{{ query }}"</li>
+            <li class="breadcrumb-item active" aria-current="page">Search: "{{ query }}"</li>
             {% endif %}
         </ol>
     </nav>
 
     <div class="row g-4">
-        <!-- ================= Left Sidebar Filters ================= -->
+        <!-- Sidebar Filters -->
         <div class="col-lg-3">
-            <!-- Mobile Toggle Button -->
-            <div class="d-lg-none mb-3">
-                <button class="btn btn-outline-primary w-100 fw-bold rounded-pill" type="button" data-bs-toggle="offcanvas" data-bs-target="#filterOffcanvas" aria-controls="filterOffcanvas">
-                    <i class="fas fa-filter me-2"></i> Filter Catalog
-                </button>
-            </div>
-
-            <div class="offcanvas-lg offcanvas-start border-0" tabindex="-1" id="filterOffcanvas" aria-labelledby="filterOffcanvasLabel">
-                <div class="offcanvas-header d-lg-none border-bottom">
-                    <h5 class="offcanvas-title fw-bold" id="filterOffcanvasLabel"><i class="fas fa-filter text-primary me-2"></i>Filter Catalog</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#filterOffcanvas" aria-label="Close"></button>
+            <div class="filter-card position-sticky" style="top: 90px;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="filter-group-title m-0"><i class="fas fa-filter text-primary me-2"></i>Filter Catalog</h5>
+                    <a href="{{ url_for('main.catalog') }}" class="font-xs text-danger fw-bold text-decoration-none">Reset All</a>
                 </div>
-                <div class="offcanvas-body p-0 p-lg-0">
-                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-surface position-sticky w-100" style="top: 90px; z-index: 100;">
-                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom d-none d-lg-flex">
-                            <h6 class="fw-bold m-0"><i class="fas fa-filter text-primary me-2"></i>Filter Catalog</h6>
-                            <a href="{{ url_for('main.catalog') }}" class="font-xs text-danger text-decoration-none fw-semibold">Reset All</a>
-                        </div>
-                        <div class="d-lg-none mb-3">
-                             <a href="{{ url_for('main.catalog') }}" class="btn btn-sm btn-outline-danger w-100 rounded-pill font-xs">Reset All Filters</a>
-                        </div>
 
                 <form method="GET" action="{{ url_for('main.catalog') }}" id="filterForm">
                     {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
@@ -55,19 +33,12 @@
                     <!-- Category Filter -->
                     <div class="mb-4">
                         <label class="form-label fw-bold font-sm mb-2">Category</label>
-                        <select name="category" id="categoryFilter" class="form-select form-control-fancy font-sm">
+                        <select name="category" id="categoryFilter" class="form-select font-sm py-2">
                             <option value="">All Categories</option>
                             {% for cat in all_categories %}
-                                <option value="{{ cat.slug }}" {% if selected_category and selected_category.slug == cat.slug %}selected{% endif %}>
-                                    {{ cat.name }}
-                                </option>
-                                {% if cat.subcategories %}
-                                    {% for sub in cat.subcategories %}
-                                        <option value="{{ sub.slug }}" {% if selected_category and selected_category.slug == sub.slug %}selected{% endif %}>
-                                            &nbsp;&nbsp;&nbsp;&minus; {{ sub.name }}
-                                        </option>
-                                    {% endfor %}
-                                {% endif %}
+                            <option value="{{ cat.slug }}" {% if selected_category and selected_category.slug == cat.slug %}selected{% endif %}>
+                                {{ cat.name }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -75,12 +46,12 @@
                     <!-- Brand Filter -->
                     <div class="mb-4">
                         <label class="form-label fw-bold font-sm mb-2">Brand</label>
-                        <select name="brand" id="brandFilter" class="form-select form-control-fancy font-sm">
+                        <select name="brand" id="brandFilter" class="form-select font-sm py-2">
                             <option value="">All Brands</option>
                             {% for b in all_brands %}
-                                <option value="{{ b.name }}" {% if selected_brand == b.name %}selected{% endif %}>
-                                    {{ b.name }}
-                                </option>
+                            <option value="{{ b.name }}" {% if selected_brand == b.name %}selected{% endif %}>
+                                {{ b.name }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -90,114 +61,109 @@
                         <label class="form-label fw-bold font-sm mb-2">Price Range (₹)</label>
                         <div class="row g-2">
                             <div class="col-6">
-                                <input type="number" name="min_price" class="form-control form-control-fancy font-sm" placeholder="Min" value="{{ min_price or '' }}">
+                                <input type="number" name="min_price" class="form-control font-sm" placeholder="Min ₹" value="{{ min_price or '' }}">
                             </div>
                             <div class="col-6">
-                                <input type="number" name="max_price" class="form-control form-control-fancy font-sm" placeholder="Max" value="{{ max_price or '' }}">
+                                <input type="number" name="max_price" class="form-control font-sm" placeholder="Max ₹" value="{{ max_price or '' }}">
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-sm btn-outline-primary w-100 rounded-pill mt-2 font-xs">Apply Price</button>
                     </div>
 
-                    <!-- Customer Rating -->
-                    <div class="mb-3">
+                    <!-- Rating Filter -->
+                    <div class="mb-4">
                         <label class="form-label fw-bold font-sm mb-2">Minimum Rating</label>
                         <div class="d-flex flex-column gap-2 font-sm">
                             {% for r in [4, 3, 2] %}
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="rating" id="rating{{ r }}" value="{{ r }}" 
-                                           {% if min_rating == r %}checked{% endif %}>
-                                    <label class="form-check-label text-warning" for="rating{{ r }}">
-                                        {% for i in range(r) %}<i class="fas fa-star"></i>{% endfor %}
-                                        <span class="text-secondary font-xs">&amp; Up</span>
-                                    </label>
-                                </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="rating" id="rating{{ r }}" value="{{ r }}" {% if min_rating == r %}checked{% endif %}>
+                                <label class="form-check-label text-warning" for="rating{{ r }}">
+                                    {% for i in range(r) %}<i class="fas fa-star"></i>{% endfor %}
+                                    <span class="text-dark font-xs fw-semibold">&amp; Up</span>
+                                </label>
+                            </div>
                             {% endfor %}
                         </div>
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill mt-3 fw-bold">Apply Filters</button>
+
+                    <button type="submit" class="btn btn-primary w-100 fw-bold py-2 font-sm shadow-sm" style="min-height: 44px;">
+                        <i class="fas fa-check me-2"></i> Apply Filters
+                    </button>
                 </form>
-                    </div>
-                </div>
             </div>
         </div>
 
-        <!-- ================= Right Main Area ================= -->
+        <!-- Catalog Product Grid -->
         <div class="col-lg-9">
-            <!-- Top Bar -->
-            <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-surface d-flex flex-wrap flex-md-nowrap justify-content-between align-items-center gap-3">
+            <!-- Catalog Bar -->
+            <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-surface d-flex flex-wrap justify-content-between align-items-center gap-3">
                 <div class="font-sm text-secondary">
                     {% if total_count > 0 %}
-                        Showing <strong>{{ ((current_page - 1) * 12) + 1 }}</strong> &ndash; <strong>{{ [(current_page * 12), total_count] | min }}</strong> of <strong>{{ total_count }}</strong> items
-                        {% if query %} for <strong class="text-primary">"{{ query }}"</strong>{% endif %}
+                    Showing <strong>{{ total_count }}</strong> items found
+                    {% if query %} for <strong class="text-primary">"{{ query }}"</strong>{% endif %}
                     {% else %}
-                        No items found matching your criteria.
+                    No items found matching criteria.
                     {% endif %}
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
-                    <label for="sortSelect" class="font-sm fw-semibold text-nowrap">Sort By:</label>
-                    <select id="sortSelect" class="form-select form-select-sm form-control-fancy font-sm" style="width: auto;" 
-                            onchange="window.location.href=updateQueryStringParameter(window.location.href, 'sort_by', this.value)">
+                    <label for="sortSelect" class="font-sm fw-bold text-nowrap">Sort By:</label>
+                    <select id="sortSelect" class="form-select form-select-sm font-sm py-2" style="width: auto;"
+                        onchange="window.location.href=updateQueryStringParameter(window.location.href, 'sort_by', this.value)">
                         <option value="popularity" {% if sort_by == 'popularity' %}selected{% endif %}>Most Popular</option>
                         <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
                         <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
                         <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
-                        <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Avg Customer Rating</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Product Grid -->
+            <!-- Products Grid -->
             {% if products %}
-                <div class="row g-4">
-                    {% for prod in products %}
-                        <div class="col-md-4 col-sm-6">
-                            {% include "partials/product_card.html" %}
-                        </div>
-                    {% endfor %}
+            <div class="row g-4">
+                {% for prod in products %}
+                <div class="col-md-4 col-sm-6">
+                    {% include "partials/product_card.html" %}
                 </div>
+                {% endfor %}
+            </div>
 
-                <!-- Pagination -->
-                {% if total_pages > 1 %}
-                    <nav aria-label="Catalog pagination" class="mt-5">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
-                                <a class="page-link rounded-start-pill px-4" href="{{ url_for('main.catalog', q=query, category=selected_category.slug if selected_category else '', brand=selected_brand, min_price=min_price, max_price=max_price, rating=min_rating, sort_by=sort_by, page=current_page - 1) }}">
-                                    &larr; Prev
-                                </a>
-                            </li>
-
-                            {% for p in range(1, total_pages + 1) %}
-                                <li class="page-item {% if p == current_page %}active{% endif %}">
-                                    <a class="page-link" href="{{ url_for('main.catalog', q=query, category=selected_category.slug if selected_category else '', brand=selected_brand, min_price=min_price, max_price=max_price, rating=min_rating, sort_by=sort_by, page=p) }}">
-                                        {{ p }}
-                                    </a>
-                                </li>
-                            {% endfor %}
-
-                            <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
-                                <a class="page-link rounded-end-pill px-4" href="{{ url_for('main.catalog', q=query, category=selected_category.slug if selected_category else '', brand=selected_brand, min_price=min_price, max_price=max_price, rating=min_rating, sort_by=sort_by, page=current_page + 1) }}">
-                                    Next &rarr;
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                {% endif %}
-            {% else %}
-                <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-surface my-4">
-                    <i class="fas fa-search text-muted display-3 mb-3"></i>
-                    <h4 class="fw-bold">No Matching Products Found</h4>
-                    <p class="text-muted font-sm max-w-md mx-auto mb-4">
-                        We couldn't find any products matching your selected filters or search keyword. Try broadening your criteria.
-                    </p>
-                    <div>
-                        <a href="{{ url_for('main.catalog') }}" class="btn btn-fancy-primary rounded-pill px-5">
-                            <i class="fas fa-undo me-2"></i>Reset All Filters
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <nav aria-label="Catalog pagination" class="mt-5">
+                <ul class="pagination justify-content-center gap-1">
+                    <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                        <a class="page-link px-3 fw-bold" href="{{ url_for('main.catalog', q=query, category=selected_category.slug if selected_category else '', brand=selected_brand, min_price=min_price, max_price=max_price, rating=min_rating, sort_by=sort_by, page=current_page - 1) }}">
+                            &larr; Previous
                         </a>
-                    </div>
+                    </li>
+                    {% for p in range(1, total_pages + 1) %}
+                    <li class="page-item {% if p == current_page %}active{% endif %}">
+                        <a class="page-link fw-bold" href="{{ url_for('main.catalog', q=query, category=selected_category.slug if selected_category else '', brand=selected_brand, min_price=min_price, max_price=max_price, rating=min_rating, sort_by=sort_by, page=p) }}">
+                            {{ p }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                    <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                        <a class="page-link px-3 fw-bold" href="{{ url_for('main.catalog', q=query, category=selected_category.slug if selected_category else '', brand=selected_brand, min_price=min_price, max_price=max_price, rating=min_rating, sort_by=sort_by, page=current_page + 1) }}">
+                            Next &rarr;
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+            {% else %}
+            <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-surface my-4">
+                <i class="fas fa-search text-muted display-4 mb-3"></i>
+                <h4 class="fw-bold">No Matching Products Found</h4>
+                <p class="text-secondary font-sm max-w-md mx-auto mb-4">
+                    We couldn't find any products matching your filters. Try clearing your search parameters.
+                </p>
+                <div>
+                    <a href="{{ url_for('main.catalog') }}" class="btn btn-primary fw-bold px-4 py-2">
+                        <i class="fas fa-undo me-2"></i> Reset All Filters
+                    </a>
                 </div>
+            </div>
             {% endif %}
         </div>
     </div>
@@ -211,49 +177,9 @@ function updateQueryStringParameter(uri, key, value) {
     var separator = uri.indexOf('?') !== -1 ? "&" : "?";
     if (uri.match(re)) {
         return uri.replace(re, '$1' + key + "=" + value + '$2');
-    }
-    else {
+    } else {
         return uri + separator + key + "=" + value;
     }
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    const categorySelect = document.getElementById('categoryFilter');
-    const brandSelect = document.getElementById('brandFilter');
-
-    if (categorySelect && brandSelect) {
-        categorySelect.addEventListener('change', function() {
-            const categorySlug = this.value || 'all';
-            
-            fetch(`/api/categories/${categorySlug}/brands`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        // Keep current selection if valid
-                        const currentBrand = brandSelect.value;
-                        
-                        brandSelect.innerHTML = '<option value="">All Brands</option>';
-                        let brandFound = false;
-                        
-                        data.brands.forEach(brand => {
-                            const option = document.createElement('option');
-                            option.value = brand.name;
-                            option.textContent = brand.name;
-                            if (brand.name === currentBrand) {
-                                option.selected = true;
-                                brandFound = true;
-                            }
-                            brandSelect.appendChild(option);
-                        });
-                        
-                        if (!brandFound && currentBrand) {
-                            brandSelect.value = '';
-                        }
-                    }
-                })
-                .catch(error => console.error('Error fetching brands:', error));
-        });
-    }
-});
 </script>
 {% endblock %}

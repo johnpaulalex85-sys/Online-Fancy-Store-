@@ -153,7 +153,7 @@ class FancyStoreAppTestCase(unittest.TestCase):
 
         resp_admin = self.client.get('/admin/', follow_redirects=False)
         self.assertEqual(resp_admin.status_code, 302)
-        self.assertIn('/auth/login', resp_admin.headers['Location'])
+        self.assertIn('/auth/admin/login', resp_admin.headers['Location'])
 
 
 if __name__ == '__main__':

@@ -3,14 +3,22 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{% block title %}Fancy Store - Premium E-Commerce Experience{% endblock %}</title>
+    <title>{% block title %}Fancy Store - Mobile Web App{% endblock %}</title>
 
-    <!-- Google Fonts (Inter) -->
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FancyStore">
+
+    <!-- Google Fonts (Outfit & Inter) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -18,7 +26,7 @@
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- Custom Design System CSS -->
+    <!-- Custom Accessible Design System CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
     {% block extra_css %}{% endblock %}
@@ -26,22 +34,52 @@
 
 <body>
 
-    <!-- Sticky Glassmorphism Header -->
+    <!-- Top Announcement & Trust Bar -->
+    <div class="top-announcement">
+        <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-4">
+                <span class="top-trust-badge">
+                    <i class="fas fa-shield-check"></i>
+                    <span>100% Authentic Products</span>
+                </span>
+                <span class="top-trust-badge">
+                    <i class="fas fa-truck-fast"></i>
+                    <span>Free Shipping Over ₹999</span>
+                </span>
+                <span class="top-trust-badge">
+                    <i class="fas fa-rotate-left"></i>
+                    <span>7-Day Doorstep Returns</span>
+                </span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="top-helpline">
+                    <i class="fas fa-phone-volume me-1"></i> Helpline: {{ store_settings.get('contact_phone', '+91 98765 43210') }}
+                </span>
+                <span class="text-white-50">|</span>
+                <button type="button" id="theme-toggle-btn" class="btn btn-link text-white p-0 text-decoration-none font-xs" aria-label="Toggle Dark/Light Mode">
+                    <i id="theme-toggle-icon" class="fas fa-moon me-1"></i> Theme
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation Header -->
     <header class="navbar-fancy">
         <div class="container d-flex align-items-center justify-content-between">
             <!-- Brand Logo -->
             <a href="{{ url_for('main.index') }}" class="brand-logo">
-                <i class="fas fa-bag-shopping text-primary"></i>
+                <i class="fas fa-bag-shopping"></i>
                 <span>{{ store_settings.get('store_name', 'Fancy Store') }}</span>
+                <span class="brand-badge">Official</span>
             </a>
 
-            <!-- Search Bar with Live Suggestions -->
+            <!-- Accessible Search Bar with Live Suggestions -->
             <div class="search-container">
                 <form action="{{ url_for('main.catalog') }}" method="GET" class="m-0" id="search-form">
                     <input type="text" name="q" id="live-search-input" class="search-input"
-                        placeholder="Search smartphones, laptops, fashion, shoes..."
-                        value="{{ request.args.get('q', '') }}" autocomplete="off">
-                    <button type="submit" class="search-btn" aria-label="Search">
+                        placeholder="Search smartphones, electronics, fashion, shoes..."
+                        value="{{ request.args.get('q', '') }}" autocomplete="off" aria-label="Search Catalog">
+                    <button type="submit" class="search-btn" aria-label="Search Button">
                         <i class="fas fa-search"></i>
                     </button>
                 </form>
@@ -50,74 +88,60 @@
 
             <!-- Navigation Actions -->
             <div class="d-flex align-items-center gap-2">
-                <!-- Theme Toggler -->
-                <button type="button" id="theme-toggle-btn" class="nav-action-btn bg-transparent border-0"
-                    aria-label="Toggle Theme">
-                    <i id="theme-toggle-icon" class="fas fa-moon"></i>
-                    <span class="font-xs">Theme</span>
-                </button>
-
                 <!-- Wishlist -->
-                <a href="{{ url_for('cart.wishlist_view') }}" class="nav-action-btn">
+                <a href="{{ url_for('cart.wishlist_view') }}" class="nav-action-btn" title="View Wishlist">
                     <i class="far fa-heart"></i>
-                    <span class="font-xs">Wishlist</span>
+                    <span>Wishlist</span>
                     <span id="wishlist-badge" class="badge-pulse"
-                        style="display: {% if wishlist_count > 0 %}inline-block{% else %}none{% endif %};">{{
-                        wishlist_count }}</span>
+                        style="display: {% if wishlist_count > 0 %}inline-block{% else %}none{% endif %};">{{ wishlist_count }}</span>
                 </a>
 
                 <!-- Cart -->
-                <a href="{{ url_for('cart.view_cart') }}" class="nav-action-btn">
+                <a href="{{ url_for('cart.view_cart') }}" class="nav-action-btn" title="View Cart">
                     <i class="fas fa-shopping-cart"></i>
-                    <span class="font-xs">Cart</span>
+                    <span>Cart</span>
                     <span id="cart-badge" class="badge-pulse"
-                        style="display: {% if cart_count > 0 %}inline-block{% else %}none{% endif %};">{{ cart_count
-                        }}</span>
+                        style="display: {% if cart_count > 0 %}inline-block{% else %}none{% endif %};">{{ cart_count }}</span>
                 </a>
 
                 <!-- User Account Dropdown -->
                 <div class="dropdown">
                     {% if current_user.is_authenticated %}
-                    <a href="#" class="nav-action-btn dropdown-toggle text-decoration-none" data-bs-toggle="dropdown">
+                    <a href="#" class="nav-action-btn dropdown-toggle text-decoration-none" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="far fa-user-circle"></i>
-                        <span class="font-xs">{{ current_user.name.split()[0] }}</span>
+                        <span>{{ current_user.name.split()[0] }}</span>
                     </a>
                     {% else %}
-                    <a href="#"
-                        class="btn bg-white text-primary fw-bold px-4 py-1 ms-2 dropdown-toggle text-decoration-none"
-                        data-bs-toggle="dropdown" style="border-radius: 2px;">
-                        Login
+                    <a href="#" class="btn btn-warning fw-bold px-3 py-2 ms-2 dropdown-toggle text-decoration-none shadow-sm"
+                        data-bs-toggle="dropdown" style="border-radius: 6px; font-size: 0.95rem; color: #0f172a;">
+                        <i class="fas fa-user me-1"></i> Login / Sign Up
                     </a>
                     {% endif %}
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2 p-2">
                         {% if current_user.is_authenticated %}
                         <li class="px-3 py-2 border-bottom mb-2">
-                            <div class="fw-bold text-truncate" style="max-width: 180px;">{{ current_user.name }}</div>
-                            <div class="text-muted font-xs text-truncate" style="max-width: 180px;">{{
-                                current_user.email }}</div>
+                            <div class="fw-bold text-truncate" style="max-width: 200px; color: #0f172a;">{{ current_user.name }}</div>
+                            <div class="text-muted font-xs text-truncate" style="max-width: 200px;">{{ current_user.email }}</div>
                         </li>
                         {% if current_user.is_admin %}
                         <li>
-                            <a class="dropdown-item rounded-2 py-2 fw-semibold text-primary"
-                                href="{{ url_for('admin.dashboard') }}">
-                                <i class="fas fa-shield-alt me-2"></i>Admin Dashboard
+                            <a class="dropdown-item rounded-2 py-2 fw-semibold text-primary" href="{{ url_for('admin.dashboard') }}">
+                                <i class="fas fa-shield-alt me-2 text-primary"></i>Admin Dashboard
                             </a>
                         </li>
                         {% else %}
                         <li>
                             <a class="dropdown-item rounded-2 py-2" href="{{ url_for('orders.history') }}">
-                                <i class="fas fa-box-open me-2"></i>My Orders
+                                <i class="fas fa-box-open me-2 text-primary"></i>My Orders
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item rounded-2 py-2" href="{{ url_for('auth.profile') }}">
-                                <i class="fas fa-user-gear me-2"></i>Profile & Address
+                                <i class="fas fa-user-gear me-2 text-primary"></i>Profile & Address
                             </a>
                         </li>
                         {% endif %}
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
+                        <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item rounded-2 py-2 text-danger" href="{{ url_for('auth.logout') }}">
                                 <i class="fas fa-sign-out-alt me-2"></i>Logout
@@ -125,9 +149,8 @@
                         </li>
                         {% else %}
                         <li>
-                            <a class="dropdown-item rounded-2 py-2 fw-semibold text-primary"
-                                href="{{ url_for('auth.login') }}">
-                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            <a class="dropdown-item rounded-2 py-2 fw-bold text-primary" href="{{ url_for('auth.login') }}">
+                                <i class="fas fa-sign-in-alt me-2"></i>Customer Login
                             </a>
                         </li>
                         <li>
@@ -135,12 +158,9 @@
                                 <i class="fas fa-user-plus me-2"></i>Create Account
                             </a>
                         </li>
+                        <li><hr class="dropdown-divider"></li>
                         <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li>
-                            <a class="dropdown-item rounded-2 py-2 text-muted font-xs"
-                                href="{{ url_for('auth.admin_login') }}">
+                            <a class="dropdown-item rounded-2 py-2 text-muted font-xs" href="{{ url_for('auth.admin_login') }}">
                                 <i class="fas fa-lock me-2"></i>Admin Portal
                             </a>
                         </li>
@@ -151,9 +171,21 @@
         </div>
     </header>
 
+    <!-- Secondary Category Navigation Bar -->
+    <nav class="category-nav-bar">
+        <div class="container d-flex align-items-center gap-2">
+            <a href="{{ url_for('main.catalog') }}" class="cat-nav-link text-primary fw-bold">
+                <i class="fas fa-th-large"></i> All Products
+            </a>
+            {% for cat in nav_categories %}
+            <a href="{{ url_for('main.catalog', category=cat.slug) }}" class="cat-nav-link">
+                {{ cat.name }}
+            </a>
+            {% endfor %}
+        </div>
+    </nav>
 
-
-    <!-- Server Flash Messages (Processed by main.js into Toasts) -->
+    <!-- Server Flash Messages -->
     <div class="d-none">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -165,90 +197,135 @@
     </div>
 
     <!-- Main Body Content -->
-    <main class="min-vh-100">
+    <main class="min-vh-100 py-4">
         {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->
     <footer class="footer-fancy">
         <div class="container">
-            <div class="row g-5">
+            <div class="row g-4">
                 <!-- Store Bio -->
                 <div class="col-lg-4 col-md-6">
-                    <a href="{{ url_for('main.index') }}" class="brand-logo mb-3 d-inline-block">
-                        <i class="fas fa-bag-shopping text-primary"></i>
+                    <a href="{{ url_for('main.index') }}" class="brand-logo mb-3 d-inline-flex text-white">
+                        <i class="fas fa-bag-shopping text-info"></i>
                         <span>{{ store_settings.get('store_name', 'Fancy Store') }}</span>
                     </a>
-                    <p class="text-muted font-sm mb-4">
-                        Fancy Store is a state-of-the-art e-commerce destination bringing you premium electronics,
-                        cutting-edge fashion, and modern home appliances with express shipping and 100% authentic
-                        guarantee.
+                    <p class="text-secondary font-sm mb-4">
+                        Fancy Store is a trusted e-commerce platform offering premium electronics, fashion apparel, and home essentials with verified quality, 100% authentic guarantee, and fast delivery.
                     </p>
                     <div class="d-flex gap-3">
-                        <a href="#" class="btn btn-outline-secondary rounded-circle" aria-label="Facebook"><i
-                                class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="btn btn-outline-secondary rounded-circle" aria-label="Twitter"><i
-                                class="fab fa-twitter"></i></a>
-                        <a href="#" class="btn btn-outline-secondary rounded-circle" aria-label="Instagram"><i
-                                class="fab fa-instagram"></i></a>
-                        <a href="#" class="btn btn-outline-secondary rounded-circle" aria-label="YouTube"><i
-                                class="fab fa-youtube"></i></a>
+                        <a href="#" class="btn btn-outline-light rounded-circle btn-sm" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="btn btn-outline-light rounded-circle btn-sm" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="btn btn-outline-light rounded-circle btn-sm" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="btn btn-outline-light rounded-circle btn-sm" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
                     </div>
                 </div>
 
-                <!-- Quick Links -->
+                <!-- Categories -->
                 <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-title">Categories</h5>
-                    <ul class="list-unstyled footer-links">
-                        {% for cat in nav_categories[:6] %}
+                    <h5 class="footer-heading">Top Categories</h5>
+                    <ul class="footer-links">
+                        {% for cat in nav_categories[:5] %}
                         <li><a href="{{ url_for('main.catalog', category=cat.slug) }}">{{ cat.name }}</a></li>
                         {% endfor %}
                     </ul>
                 </div>
 
-                <!-- Customer Service -->
-                <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-title">Customer Care</h5>
-                    <ul class="list-unstyled footer-links">
-                        <li><a href="{{ url_for('orders.history') }}">Track Your Order</a></li>
-                        <li><a href="{{ url_for('cart.view_cart') }}">Shopping Cart</a></li>
-                        <li><a href="{{ url_for('cart.wishlist_view') }}">My Wishlist</a></li>
-                        <li><a href="#">Return & Refund Policy</a></li>
-                        <li><a href="#">FAQ & Help Center</a></li>
+                <!-- Customer Care -->
+                <div class="col-lg-3 col-md-6">
+                    <h5 class="footer-heading">Customer Assistance</h5>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('orders.history') }}"><i class="fas fa-box-open me-2 text-warning"></i> Track Your Orders</a></li>
+                        <li><a href="{{ url_for('cart.view_cart') }}"><i class="fas fa-shopping-cart me-2 text-warning"></i> View Shopping Cart</a></li>
+                        <li><a href="{{ url_for('cart.wishlist_view') }}"><i class="fas fa-heart me-2 text-warning"></i> Saved Wishlist</a></li>
+                        <li><a href="#"><i class="fas fa-shield-halved me-2 text-warning"></i> 7-Day Return Policy</a></li>
                     </ul>
                 </div>
 
-                <!-- Newsletter & Contact -->
-                <div class="col-lg-4 col-md-6">
-                    <h5 class="footer-title">Contact Us</h5>
-                    <div class="d-flex flex-column gap-2 text-muted font-sm">
-                        <div><i class="fas fa-envelope text-primary me-2"></i> {{ store_settings.get('contact_email',
-                            'support@fancystore.com') }}</div>
-                        <div><i class="fas fa-phone text-primary me-2"></i> {{ store_settings.get('contact_phone', '+91
-                            98765 43210') }}</div>
+                <!-- Helpline & Security -->
+                <div class="col-lg-3 col-md-6">
+                    <h5 class="footer-heading">Support & Security</h5>
+                    <div class="d-flex flex-column gap-2 mb-3">
+                        <div class="text-light fw-bold">
+                            <i class="fas fa-headset text-warning me-2 fs-5"></i>
+                            Call Helpline: {{ store_settings.get('contact_phone', '+91 98765 43210') }}
+                        </div>
+                        <div class="text-secondary font-sm">
+                            <i class="fas fa-envelope text-warning me-2"></i> {{ store_settings.get('contact_email', 'support@fancystore.com') }}
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="badge bg-secondary p-2 me-1"><i class="fas fa-credit-card me-1"></i> Cards</span>
+                        <span class="badge bg-secondary p-2 me-1"><i class="fas fa-mobile-screen me-1"></i> UPI</span>
+                        <span class="badge bg-secondary p-2"><i class="fas fa-money-bill-wave me-1"></i> COD</span>
                     </div>
                 </div>
             </div>
 
-            <hr class="my-5 border-secondary-subtle">
-
-            <div class="d-flex flex-wrap justify-content-between align-items-center text-muted font-xs">
-                <div>&copy; 2026 Fancy Store Inc. All rights reserved. Designed for enterprise production.</div>
-                <div class="d-flex gap-4">
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
-                    <a href="#">Security</a>
-                    <a href="#">Sitemap</a>
+            <div class="footer-bottom d-flex flex-wrap justify-content-between align-items-center">
+                <div>&copy; 2026 Fancy Store. All rights reserved. Enterprise E-Commerce Mobile Web App.</div>
+                <div class="d-flex gap-3">
+                    <a href="#" class="text-secondary">Privacy Policy</a>
+                    <a href="#" class="text-secondary">Terms of Sale</a>
+                    <a href="#" class="text-secondary">Security Guarantee</a>
                 </div>
             </div>
         </div>
     </footer>
+
+    <!-- Mobile Bottom App Dock (Visible on Smartphones < 768px) -->
+    <nav class="mobile-bottom-dock">
+        <a href="{{ url_for('main.index') }}" class="mobile-dock-item {% if request.endpoint == 'main.index' %}active{% endif %}">
+            <i class="fas fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="{{ url_for('main.catalog') }}" class="mobile-dock-item {% if request.endpoint == 'main.catalog' %}active{% endif %}">
+            <i class="fas fa-magnifying-glass"></i>
+            <span>Search</span>
+        </a>
+        <a href="{{ url_for('cart.wishlist_view') }}" class="mobile-dock-item {% if request.endpoint == 'cart.wishlist_view' %}active{% endif %}">
+            <i class="far fa-heart"></i>
+            <span>Wishlist</span>
+            {% if wishlist_count > 0 %}
+            <span class="mobile-dock-badge">{{ wishlist_count }}</span>
+            {% endif %}
+        </a>
+        <a href="{{ url_for('cart.view_cart') }}" class="mobile-dock-item {% if request.endpoint == 'cart.view_cart' %}active{% endif %}">
+            <i class="fas fa-shopping-bag"></i>
+            <span>Cart</span>
+            {% if cart_count > 0 %}
+            <span class="mobile-dock-badge">{{ cart_count }}</span>
+            {% endif %}
+        </a>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('orders.history') }}" class="mobile-dock-item {% if request.endpoint and 'orders' in request.endpoint %}active{% endif %}">
+            <i class="far fa-user-circle"></i>
+            <span>Account</span>
+        </a>
+        {% else %}
+        <a href="{{ url_for('auth.login') }}" class="mobile-dock-item {% if request.endpoint and 'auth' in request.endpoint %}active{% endif %}">
+            <i class="far fa-user-circle"></i>
+            <span>Login</span>
+        </a>
+        {% endif %}
+    </nav>
 
     <!-- Bootstrap 5 Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Custom Frontend Controller JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(reg => console.log('[PWA SW] Registered successfully with scope:', reg.scope))
+                    .catch(err => console.log('[PWA SW] Registration failed:', err));
+            });
+        }
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 

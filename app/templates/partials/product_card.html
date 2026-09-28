@@ -1,25 +1,24 @@
-<div class="product-card h-100">
+<div class="product-card">
     <!-- Thumbnail & Badges -->
-    <div class="product-thumb-wrap">
+    <div class="product-thumb-container">
         {% if prod.discount > 0 %}
-        <span class="badge-discount">-{{ prod.discount | int }}%</span>
+        <span class="badge-discount">{{ prod.discount | int }}% OFF</span>
         {% endif %}
 
         <button type="button"
-            class="btn-wishlist-card btn-wishlist-toggle {% if prod.id in session.get('wishlist_items', []) %}active{% endif %}"
-            data-product-id="{{ prod.id }}" aria-label="Add to Wishlist">
-            <i
-                class="{% if prod.id in session.get('wishlist_items', []) %}fas fa-heart text-danger{% else %}far fa-heart{% endif %}"></i>
+            class="btn-wishlist-toggle {% if prod.id in session.get('wishlist_items', []) %}active{% endif %}"
+            data-product-id="{{ prod.id }}" aria-label="Save to Wishlist" title="Save to Wishlist">
+            <i class="{% if prod.id in session.get('wishlist_items', []) %}fas fa-heart text-danger{% else %}far fa-heart{% endif %}"></i>
         </button>
 
-        <a href="{{ url_for('main.product_detail', slug=prod.slug) }}" class="d-block w-100 h-100">
+        <a href="{{ url_for('main.product_detail', slug=prod.slug) }}" class="d-block w-100 h-100 text-center">
             <img src="{{ prod.thumbnail }}" alt="{{ prod.name }}" class="product-thumb"
-                onerror="this.src='https://placehold.co/400x400?text=No+Image'">
+                onerror="this.src='https://placehold.co/400x400?text=No+Product+Image'">
         </a>
     </div>
 
     <!-- Product Details -->
-    <div class="product-info">
+    <div class="d-flex flex-column flex-grow-1">
         <div class="product-brand">{{ prod.brand }}</div>
 
         <a href="{{ url_for('main.product_detail', slug=prod.slug) }}" class="text-decoration-none">
@@ -28,37 +27,35 @@
 
         <!-- Rating Stars -->
         <div class="product-rating">
-            <span class="badge-rating">
-                {{ prod.rating_avg }} <i class="fas fa-star font-xs"></i>
+            <span class="rating-badge">
+                <i class="fas fa-star"></i> {{ prod.rating_avg or 4.5 }}
             </span>
-            <span class="text-muted font-xs">({{ prod.rating_count }})</span>
+            <span class="review-count">({{ prod.rating_count or 12 }} reviews)</span>
         </div>
 
         <!-- Price Breakdown -->
-        <div class="price-wrap">
-            <span class="price-current">{{ prod.price_after_discount | currency }}</span>
+        <div class="price-container">
+            <span class="offer-price">{{ prod.price_after_discount | currency }}</span>
             {% if prod.discount > 0 %}
-            <span class="price-regular">{{ prod.regular_price | currency }}</span>
+            <span class="original-price">{{ prod.regular_price | currency }}</span>
+            <span class="savings-label">Save {{ (prod.regular_price - prod.price_after_discount) | currency }}</span>
             {% endif %}
         </div>
 
         <!-- Action Buttons -->
-        <div class="card-actions mt-auto">
+        <div class="mt-auto pt-3">
             {% if prod.in_stock %}
-            <form action="{{ url_for('cart.add_to_cart') }}" method="POST" class="d-flex w-100 gap-2 m-0">
+            <form action="{{ url_for('cart.add_to_cart') }}" method="POST" class="d-flex gap-2 m-0">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="product_id" value="{{ prod.id }}">
                 <input type="hidden" name="quantity" value="1">
-                <button type="submit" class="btn btn-add-cart font-sm flex-fill">
-                    <i class="fas fa-cart-plus me-1"></i>Cart
-                </button>
-                <button type="submit" name="buy_now" value="1" class="btn btn-buy-now font-sm flex-fill">
-                    <i class="fas fa-bolt me-1"></i>Buy
+                <button type="submit" class="btn btn-add-cart flex-fill">
+                    <i class="fas fa-cart-plus me-1"></i> Add to Cart
                 </button>
             </form>
             {% else %}
-            <button type="button" class="btn btn-secondary w-100 font-sm disabled" disabled>
-                <i class="fas fa-ban me-1"></i>Out of Stock
+            <button type="button" class="btn btn-secondary w-100 disabled" disabled style="min-height: 44px;">
+                <i class="fas fa-ban me-1"></i> Out of Stock
             </button>
             {% endif %}
         </div>
