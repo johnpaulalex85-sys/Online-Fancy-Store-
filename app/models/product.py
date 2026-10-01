@@ -152,10 +152,22 @@ class Product:
             
         cat_val = category or category_id
         if cat_val and cat_val != 'all':
+            cat_regex = {"$regex": f"^{str(cat_val).strip()}$", "$options": "i"}
+            cat_conditions = [
+                {"category": str(cat_val)},
+                {"category": cat_regex},
+                {"category_id": str(cat_val)},
+                {"subcategory": str(cat_val)},
+                {"subcategory": cat_regex}
+            ]
+            if category_id and str(category_id) != str(cat_val):
+                cat_conditions.append({"category_id": str(category_id)})
+                cat_conditions.append({"category": str(category_id)})
+
             if "$or" in filter_dict:
-                filter_dict["$and"] = [{"$or": filter_dict.pop("$or")}, {"$or": [{"category": str(cat_val)}, {"subcategory": str(cat_val)}, {"category_id": str(cat_val)}]}]
+                filter_dict["$and"] = [{"$or": filter_dict.pop("$or")}, {"$or": cat_conditions}]
             else:
-                filter_dict["$or"] = [{"category": str(cat_val)}, {"subcategory": str(cat_val)}, {"category_id": str(cat_val)}]
+                filter_dict["$or"] = cat_conditions
                 
         if brand and brand != 'all':
             filter_dict["brand"] = brand
@@ -339,36 +351,64 @@ class Product:
         mongo.get_collection('products').update_one({"_id": self.id}, {"$set": {"status": self.status, "last_updated": datetime.datetime.now()}})
 
 
+_CATEGORIES_CACHE = None
+_CATEGORIES_CACHE_TIME = 0.0
+CATEGORIES_TTL = 60.0  # seconds
+
 class Category:
-    """Category model wrapping the MongoDB 'categories' collection."""
+    """Category model wrapping the MongoDB 'categories' collection with in-memory caching."""
     def __init__(self, doc):
         self._doc = doc
         self.id = str(doc.get('_id'))
         self.name = doc.get('name', '')
-        self.slug = doc.get('slug', '')
+        self.slug = doc.get('slug') if doc.get('slug') else slugify_text(self.name)
         self.parent_id = doc.get('parent_id')
-        self.icon = doc.get('icon', '')
+        self.description = doc.get('description', '')
+        self.icon = doc.get('icon') or 'fa-tag'
         self.image = doc.get('image', '')
         self.status = doc.get('status', 'active')
         self.display_order = int(doc.get('display_order', 1))
         self.created_at = doc.get('created_at')
 
     @classmethod
-    def get_all_active(cls):
+    def _fetch_all_cached(cls):
+        global _CATEGORIES_CACHE, _CATEGORIES_CACHE_TIME
+        now = datetime.datetime.now().timestamp()
+        if _CATEGORIES_CACHE is not None and (now - _CATEGORIES_CACHE_TIME) < CATEGORIES_TTL:
+            return _CATEGORIES_CACHE
         try:
-            cursor = mongo.get_collection('categories').find({"status": "active"}).sort("display_order", 1)
-            return [cls(doc) for doc in cursor]
+            cursor = mongo.get_collection('categories').find().sort("display_order", 1)
+            docs = list(cursor)
+            _CATEGORIES_CACHE = docs
+            _CATEGORIES_CACHE_TIME = now
+            return docs
+        except Exception:
+            return _CATEGORIES_CACHE or []
+
+    @classmethod
+    def clear_cache(cls):
+        global _CATEGORIES_CACHE, _CATEGORIES_CACHE_TIME
+        _CATEGORIES_CACHE = None
+        _CATEGORIES_CACHE_TIME = 0.0
+
+    @classmethod
+    def get_all_active(cls, parent_id=None):
+        try:
+            docs = cls._fetch_all_cached()
+            filtered = [d for d in docs if d.get('status') == 'active']
+            if parent_id is not None:
+                filtered = [d for d in filtered if d.get('parent_id') == parent_id]
+            return [cls(doc) for doc in filtered]
         except Exception as e:
             return []
 
     @classmethod
     def get_all(cls, parent_id=None, **kwargs):
         try:
-            query = {}
+            docs = cls._fetch_all_cached()
             if parent_id is not None:
-                query["parent_id"] = parent_id
-            cursor = mongo.get_collection('categories').find(query).sort("display_order", 1)
-            return [cls(doc) for doc in cursor]
+                docs = [d for d in docs if d.get('parent_id') == parent_id]
+            return [cls(doc) for doc in docs]
         except Exception as e:
             return []
 
@@ -384,6 +424,13 @@ class Category:
     def get_by_slug(cls, slug):
         try:
             doc = mongo.get_collection('categories').find_one({"slug": slug})
+            if not doc:
+                cursor = mongo.get_collection('categories').find()
+                for d in cursor:
+                    c_slug = d.get('slug') or slugify_text(d.get('name', ''))
+                    if c_slug.lower() == slug.lower():
+                        return cls(d)
+                return None
             return cls(doc) if doc else None
         except Exception:
             return None
@@ -420,6 +467,7 @@ class Category:
         }
         doc.update(kwargs)
         mongo.get_collection('categories').insert_one(doc)
+        cls.clear_cache()
         return cls(doc)
 
     def update(self, name, parent_id=None, icon=None, image=None, display_order=1, status='active'):
@@ -438,19 +486,26 @@ class Category:
                 "status": self.status
             }}
         )
+        Category.clear_cache()
 
     def delete(self):
         # Also delete subcategories if this is a parent
         mongo.get_collection('categories').delete_many({"parent_id": self.id})
         mongo.get_collection('categories').delete_one({"_id": self.id})
+        Category.clear_cache()
 
     def toggle_status(self):
         self.status = 'disabled' if self.status == 'active' else 'active'
         mongo.get_collection('categories').update_one({"_id": self.id}, {"$set": {"status": self.status}})
+        Category.clear_cache()
 
+
+_BRANDS_CACHE = None
+_BRANDS_CACHE_TIME = 0.0
+BRANDS_TTL = 60.0  # seconds
 
 class Brand:
-    """Brand model wrapping the MongoDB 'brands' collection."""
+    """Brand model wrapping the MongoDB 'brands' collection with in-memory caching."""
     def __init__(self, doc):
         self._doc = doc
         self.id = str(doc.get('_id'))
@@ -462,14 +517,35 @@ class Brand:
         self.created_at = doc.get('created_at')
 
     @classmethod
+    def _fetch_all_cached(cls):
+        global _BRANDS_CACHE, _BRANDS_CACHE_TIME
+        now = datetime.datetime.now().timestamp()
+        if _BRANDS_CACHE is not None and (now - _BRANDS_CACHE_TIME) < BRANDS_TTL:
+            return _BRANDS_CACHE
+        try:
+            cursor = mongo.get_collection('brands').find().sort("name", 1)
+            docs = list(cursor)
+            _BRANDS_CACHE = docs
+            _BRANDS_CACHE_TIME = now
+            return docs
+        except Exception:
+            return _BRANDS_CACHE or []
+
+    @classmethod
+    def clear_cache(cls):
+        global _BRANDS_CACHE, _BRANDS_CACHE_TIME
+        _BRANDS_CACHE = None
+        _BRANDS_CACHE_TIME = 0.0
+
+    @classmethod
     def get_all_active(cls):
-        cursor = mongo.get_collection('brands').find({"status": "active"}).sort("name", 1)
-        return [cls(doc) for doc in cursor]
+        docs = cls._fetch_all_cached()
+        return [cls(doc) for doc in docs if doc.get('status') == 'active']
 
     @classmethod
     def get_all(cls):
-        cursor = mongo.get_collection('brands').find().sort("name", 1)
-        return [cls(doc) for doc in cursor]
+        docs = cls._fetch_all_cached()
+        return [cls(doc) for doc in docs]
 
     @classmethod
     def get_by_id(cls, brand_id):

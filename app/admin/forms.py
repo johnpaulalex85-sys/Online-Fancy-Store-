@@ -31,7 +31,11 @@ class ProductForm(FlaskForm):
 
 class CategoryForm(FlaskForm):
     name = StringField('Category Name', validators=[DataRequired(), Length(min=2, max=60)])
+    description = StringField('Short Tagline / Promo Description (Optional)', validators=[Optional(), Length(max=200)])
     parent_id = SelectField('Parent Category (Optional)', choices=[], validators=[Optional()])
+    icon = StringField('FontAwesome Icon Class (e.g. fa-tag, fa-mobile-screen, fa-shirt)', default='fa-tag', validators=[Optional(), Length(max=50)])
+    image = StringField('Category Image URL (Optional)', validators=[Optional(), Length(max=500)])
+    image_upload = FileField('Upload Image (Optional)', validators=[FileAllowed(['jpg', 'png', 'jpeg', 'webp', 'gif'], 'Images only!')])
 
     submit = SubmitField('Save Category')
 
@@ -57,7 +61,8 @@ class CouponForm(FlaskForm):
 class BannerForm(FlaskForm):
     title = StringField('Headline Title', validators=[DataRequired(), Length(min=3, max=100)])
     subtitle = StringField('Sub-headline', validators=[Optional(), Length(max=200)])
-    image_url = StringField('Background Image URL', validators=[DataRequired(), Length(max=500)])
+    image_url = StringField('Background Image URL (Optional)', validators=[Optional(), Length(max=500)])
+    image_upload = FileField('Upload Banner Image File (Optional)', validators=[FileAllowed(['jpg', 'png', 'jpeg', 'webp', 'gif'], 'Images only!')])
     link_url = StringField('Button Destination URL', validators=[Optional(), Length(max=500)])
     banner_type = SelectField('Display Location', choices=[('homepage', 'Homepage Hero Slider'), ('promo', 'Mid-Page Strip')], default='homepage')
     sort_order = IntegerField('Sort Order (Lower appears first)', default=1, validators=[Optional()])
@@ -84,6 +89,7 @@ class StoreSettingsForm(FlaskForm):
     store_name = StringField('Store Name', validators=[DataRequired(), Length(min=2, max=100)])
     contact_email = StringField('Contact Email', validators=[DataRequired(), Length(max=100)])
     contact_phone = StringField('Contact Phone', validators=[DataRequired(), Length(max=20)])
+    whatsapp_number = StringField('WhatsApp Business Number', validators=[Optional(), Length(max=25)])
     delivery_charge_per_km = FloatField('Delivery Cost (per km)', default=10.0, validators=[Optional(), NumberRange(min=0.0)])
     submit_settings = SubmitField('Save Configuration')
 

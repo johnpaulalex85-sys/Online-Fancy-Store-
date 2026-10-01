@@ -1,251 +1,319 @@
 {% extends "base.html" %}
-{% block title %}Fancy Store - Shop Premium Electronics, Fashion & Home Goods{% endblock %}
+{% block title %}NimbleCart - Style for a Brighter Tomorrow{% endblock %}
 
 {% block content %}
 <div class="container">
 
-    {% if banners %}
-    <!-- Dynamic Hero Banner & Carousel Section -->
-    <section class="hero-slider-section mb-4">
-        <div id="heroCarousel" class="carousel slide hero-card shadow-sm rounded-4 overflow-hidden" data-bs-ride="carousel">
-            <div class="carousel-indicators">
-                {% for b in banners %}
-                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ loop.index0 }}" {% if loop.first %}class="active" aria-current="true"{% endif %}></button>
-                {% endfor %}
-            </div>
-            <div class="carousel-inner">
-                {% for b in banners %}
-                <div class="carousel-item {% if loop.first %}active{% endif %}">
-                    <a href="{{ b.link_url or '#' }}" class="position-relative d-block text-decoration-none">
-                        <img src="{{ b.image_url }}" class="hero-banner-img" alt="{{ b.title }}">
-                        <div class="position-absolute bottom-0 start-0 w-100 p-4" style="background: linear-gradient(to top, rgba(15,23,42,0.9), transparent);">
-                            <span class="badge bg-warning text-dark font-sm fw-bold px-3 py-2 mb-2">Featured</span>
-                            <h2 class="text-white fw-bold fs-2 mb-1">{{ b.title }}</h2>
-                            {% if b.subtitle %}<p class="text-white-50 font-sm m-0">{{ b.subtitle }}</p>{% endif %}
+    <!-- 1. Main Hero Banner Section -->
+    <section class="mb-5">
+        <div class="hero-nimble-card">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-6">
+                    <span class="hero-subtitle-tag">Live Beautifully Everyday</span>
+                    <h1 class="hero-title-main">Style for a Brighter Tomorrow</h1>
+                    <p class="hero-desc-text">
+                        Discover thoughtfully chosen products for a happier, healthier, and more inspired you.
+                    </p>
+                    <div>
+                        <a href="{{ url_for('main.catalog') }}" class="btn-nimble-cta text-decoration-none">
+                            <span>Shop Now</span>
+                            <i class="fas fa-arrow-right font-xs"></i>
+                        </a>
+                    </div>
+
+                    <!-- Hero Trust Feature Badges -->
+                    <div class="hero-trust-row">
+                        <div class="hero-trust-item">
+                            <i class="fas fa-leaf"></i>
+                            <span>Sustainable Choices</span>
                         </div>
-                    </a>
+                        <div class="hero-trust-item">
+                            <i class="far fa-heart"></i>
+                            <span>Curated with Care</span>
+                        </div>
+                        <div class="hero-trust-item">
+                            <i class="fas fa-star"></i>
+                            <span>Loved by Thousands</span>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Right Hero Interactive Moving Ad Slider (Flashcard Carousel) -->
+                <div class="col-lg-6">
+                    {% if banners %}
+                    <div id="heroAdCarousel" class="carousel slide carousel-fade hero-img-container overflow-hidden shadow-lg rounded-4" data-bs-ride="carousel" data-bs-interval="4000">
+                        <!-- Carousel Indicators -->
+                        <div class="carousel-indicators">
+                            {% for b in banners %}
+                            <button type="button" data-bs-target="#heroAdCarousel" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% endif %}" aria-label="Ad Slide {{ loop.index }}"></button>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Carousel Inner Slides -->
+                        <div class="carousel-inner h-100 position-relative">
+                            {% for b in banners %}
+                            <div class="carousel-item h-100 {% if loop.first %}active{% endif %}">
+                                <a href="{{ b.link_url or url_for('main.catalog') }}" class="d-block w-100 h-100 text-decoration-none hero-ad-slide">
+                                    <!-- Ambient Backdrop Blur -->
+                                    <img src="{{ b.image_url }}" class="hero-ad-slide-blur" alt="" aria-hidden="true" onerror="this.src='https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80'">
+                                    
+                                    <!-- Main Fully-Fitted Banner Image -->
+                                    <img src="{{ b.image_url }}" class="hero-ad-slide-img" alt="{{ b.title }}" onerror="this.src='https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80'">
+                                    
+                                    <!-- Top-Left Glass Badge -->
+                                    <div class="hero-ad-badge">
+                                        <i class="fas fa-bullhorn me-1"></i> Featured Offer
+                                    </div>
+                                    
+                                    <!-- Dynamic Bottom Gradient Caption -->
+                                    {% if b.title or b.subtitle %}
+                                    <div class="hero-ad-caption text-start">
+                                        {% if b.title %}<h5 class="fw-extrabold mb-1">{{ b.title }}</h5>{% endif %}
+                                        {% if b.subtitle %}<p class="mb-0">{{ b.subtitle }}</p>{% endif %}
+                                    </div>
+                                    {% endif %}
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Controls -->
+                        <button class="carousel-control-prev" type="button" data-bs-target="#heroAdCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#heroAdCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="hero-img-container">
+                        <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80"
+                            alt="Live Beautifully Everyday Lifestyle" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80'">
+                        <div class="sticker-badge sticker-top-right">
+                            Small Choices Big Impact ♡
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. Sub-Hero Category Circle Icons Showcase (Horizontally Scrollable) -->
+    {% if categories %}
+    <section class="category-circles-section mb-4 position-relative">
+        <div class="d-flex align-items-center justify-content-between mb-3 px-1">
+            <h3 class="fw-bold fs-5 m-0" style="color: var(--nimble-dark);">Explore Categories</h3>
+            <div class="d-none d-md-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-light border rounded-circle shadow-sm category-scroll-btn" id="cat-scroll-left" aria-label="Scroll left">
+                    <i class="fas fa-chevron-left font-xs"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-light border rounded-circle shadow-sm category-scroll-btn" id="cat-scroll-right" aria-label="Scroll right">
+                    <i class="fas fa-chevron-right font-xs"></i>
+                </button>
+            </div>
+        </div>
+        <div class="category-circles-track-wrapper">
+            <div class="category-circles-track" id="categoryCirclesTrack">
+                {% for cat in categories %}
+                {% if cat.status == 'active' or not cat.status %}
+                <a href="{{ url_for('main.catalog', category=cat.slug) }}" class="category-circle-card-item text-decoration-none">
+                    <div class="category-circle-icon-box">
+                        {% if cat.image and 'placehold.co' not in cat.image %}
+                            <img src="{{ cat.image }}" alt="{{ cat.name }}" class="w-100 h-100 object-fit-cover" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-block';">
+                            <i class="fas {{ cat.icon or 'fa-tag' }}" style="display: none;"></i>
+                        {% else %}
+                            <i class="fas {{ cat.icon or 'fa-tag' }}"></i>
+                        {% endif %}
+                    </div>
+                    <span class="category-circle-item-label" title="{{ cat.name }}">{{ cat.name }}</span>
+                </a>
+                {% endif %}
                 {% endfor %}
             </div>
-            {% if banners | length > 1 %}
-            <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            </button>
-            {% endif %}
         </div>
     </section>
     {% endif %}
 
-    <!-- Trust Features Assurance Bar -->
-    <section class="trust-features-bar my-4">
-        <div class="row g-3">
-            <div class="col-md-3 col-sm-6">
-                <div class="feature-box">
-                    <div class="feature-icon-wrapper">
-                        <i class="fas fa-shield-check"></i>
-                    </div>
-                    <div>
-                        <div class="feature-title">100% Authentic</div>
-                        <p class="feature-desc">Directly sourced from official brands</p>
-                    </div>
-                </div>
+    <!-- 3. Featured Products Grid Section -->
+    <section class="mb-5">
+        <div class="nimble-section-header">
+            <h2 class="nimble-section-title">Featured Products</h2>
+            <a href="{{ url_for('main.catalog') }}" class="nimble-view-all text-decoration-none">
+                <span>View All</span>
+                <i class="fas fa-arrow-right font-xs"></i>
+            </a>
+        </div>
+
+        <div class="row g-2 g-md-4">
+            {% for prod in (featured_products or flash_deals or new_arrivals)[:4] %}
+            <div class="col-lg-3 col-md-4 col-6">
+                {% include "partials/product_card.html" %}
             </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="feature-box">
-                    <div class="feature-icon-wrapper">
-                        <i class="fas fa-truck-fast"></i>
-                    </div>
-                    <div>
-                        <div class="feature-title">Fast Delivery</div>
-                        <p class="feature-desc">Free shipping on orders above ₹999</p>
-                    </div>
-                </div>
+            {% else %}
+            <div class="col-12 text-center py-4 text-muted">
+                No featured products currently available.
             </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="feature-box">
-                    <div class="feature-icon-wrapper">
-                        <i class="fas fa-rotate-left"></i>
-                    </div>
-                    <div>
-                        <div class="feature-title">7-Day Easy Returns</div>
-                        <p class="feature-desc">No hassle doorstep pickup policy</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="feature-box">
-                    <div class="feature-icon-wrapper">
-                        <i class="fas fa-headset"></i>
-                    </div>
-                    <div>
-                        <div class="feature-title">Dedicated Support</div>
-                        <p class="feature-desc">Helpline assistance: {{ store_settings.get('contact_phone', '+91 98765 43210') }}</p>
-                    </div>
-                </div>
-            </div>
+            {% endfor %}
         </div>
     </section>
 
-    <!-- Category Grid Showcase -->
+    <!-- 4. Dynamic Category Promo Banner Cards (Horizontally Scrollable) -->
     {% if categories %}
+    <section class="mb-5 position-relative">
+        <div class="d-flex align-items-center justify-content-between mb-3 px-1">
+            <h3 class="fw-bold fs-4 m-0" style="color: var(--nimble-dark);">Featured Collections</h3>
+            <div class="d-none d-md-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-light border rounded-circle shadow-sm promo-scroll-btn" id="promo-scroll-left" aria-label="Scroll promo left">
+                    <i class="fas fa-chevron-left font-xs"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-light border rounded-circle shadow-sm promo-scroll-btn" id="promo-scroll-right" aria-label="Scroll promo right">
+                    <i class="fas fa-chevron-right font-xs"></i>
+                </button>
+            </div>
+        </div>
+        <div class="promo-banners-track-wrapper">
+            <div class="promo-banners-track" id="promoBannersTrack">
+                {% for cat in categories %}
+                <div class="promo-banner-card-item">
+                    <div class="promo-banner-card">
+                        <div class="promo-content">
+                            <h3 class="promo-title">{{ cat.name }}</h3>
+                            <p class="promo-desc">{{ cat.description or ('Explore our curated ' ~ cat.name ~ ' collection.') }}</p>
+                            <a href="{{ url_for('main.catalog', category=cat.slug) }}" class="btn-nimble-cta text-decoration-none">
+                                <span>Shop {{ cat.name }}</span>
+                                <i class="fas fa-arrow-right font-xs"></i>
+                            </a>
+                        </div>
+                        <div class="promo-img-wrapper">
+                            {% if cat.image and 'placehold.co' not in cat.image %}
+                                <img src="{{ cat.image }}" alt="{{ cat.name }}" onerror="this.src='https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80'">
+                            {% else %}
+                                <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80" alt="{{ cat.name }}">
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- 5. New Arrivals Section -->
+    {% if new_arrivals %}
     <section class="mb-5">
-        <div class="section-header">
-            <h2 class="section-title"><i class="fas fa-layer-group"></i> Shop by Category</h2>
-            <a href="{{ url_for('main.catalog') }}" class="btn btn-outline-primary fw-bold rounded-pill font-sm px-4">
-                View All Categories &rarr;
+        <div class="nimble-section-header">
+            <h2 class="nimble-section-title">New Arrivals</h2>
+            <a href="{{ url_for('main.catalog', sort_by='newest') }}" class="nimble-view-all text-decoration-none">
+                <span>View All</span>
+                <i class="fas fa-arrow-right font-xs"></i>
             </a>
         </div>
-        <div class="row g-3">
-            {% for cat in categories[:6] %}
-            <div class="col-lg-2 col-md-4 col-6">
-                <a href="{{ url_for('main.catalog', category=cat.slug) }}" class="text-decoration-none">
-                    <div class="card border-0 shadow-sm rounded-4 p-3 text-center h-100 bg-surface hover-lift transition">
-                        <div class="bg-primary-subtle text-primary rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; font-size: 1.5rem;">
-                            <i class="fas fa-tag"></i>
-                        </div>
-                        <h6 class="fw-bold text-dark m-0 font-sm">{{ cat.name }}</h6>
-                    </div>
-                </a>
+
+        <div class="row g-2 g-md-4">
+            {% for prod in new_arrivals[:4] %}
+            <div class="col-lg-3 col-md-4 col-6">
+                {% include "partials/product_card.html" %}
             </div>
             {% endfor %}
         </div>
     </section>
     {% endif %}
 
-    <!-- Main Products Showcase & Filters Area -->
-    <div class="row g-4">
-        <!-- Sidebar Filters -->
-        <div class="col-lg-3">
-            <div class="filter-card position-sticky" style="top: 90px;">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="filter-group-title m-0"><i class="fas fa-filter text-primary me-2"></i>Filter Catalog</h5>
-                    <a href="{{ url_for('main.catalog') }}" class="font-xs text-danger fw-bold text-decoration-none">Reset</a>
+
+
+    <!-- 7. Why Shop With Us? Assurance Grid -->
+    <section class="mb-5">
+        <div class="why-shop-card">
+            <h4 class="why-shop-header">Why Shop With Us?</h4>
+            <div class="row g-4">
+                <div class="col-lg">
+                    <div class="why-shop-item">
+                        <div class="why-shop-icon">
+                            <i class="fas fa-truck-fast"></i>
+                        </div>
+                        <div>
+                            <div class="why-shop-title">Free Shipping</div>
+                            <div class="why-shop-sub">On orders over $50</div>
+                        </div>
+                    </div>
                 </div>
-
-                <form method="GET" action="{{ url_for('main.catalog') }}" id="filterForm">
-                    <!-- Category Select -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold font-sm mb-2">Category</label>
-                        <select name="category" id="categoryFilter" class="form-select font-sm py-2">
-                            <option value="">All Categories</option>
-                            {% for cat in categories %}
-                            <option value="{{ cat.slug }}">{{ cat.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <!-- Brand Select -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold font-sm mb-2">Brand</label>
-                        <select name="brand" id="brandFilter" class="form-select font-sm py-2">
-                            <option value="">All Brands</option>
-                            {% for b in brands %}
-                            <option value="{{ b.name }}">{{ b.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <!-- Price Range -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold font-sm mb-2">Price Range (₹)</label>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <input type="number" name="min_price" class="form-control font-sm" placeholder="Min ₹">
-                            </div>
-                            <div class="col-6">
-                                <input type="number" name="max_price" class="form-control font-sm" placeholder="Max ₹">
-                            </div>
+                <div class="col-lg">
+                    <div class="why-shop-item">
+                        <div class="why-shop-icon">
+                            <i class="fas fa-shield-check"></i>
+                        </div>
+                        <div>
+                            <div class="why-shop-title">Secure Payments</div>
+                            <div class="why-shop-sub">100% protected</div>
                         </div>
                     </div>
-
-                    <!-- Rating Filter -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold font-sm mb-2">Customer Rating</label>
-                        <div class="d-flex flex-column gap-2">
-                            {% for r in [4, 3] %}
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="rating" id="rating{{ r }}" value="{{ r }}">
-                                <label class="form-check-label text-warning" for="rating{{ r }}">
-                                    {% for i in range(r) %}<i class="fas fa-star"></i>{% endfor %}
-                                    <span class="text-dark font-xs fw-semibold">&amp; Up</span>
-                                </label>
-                            </div>
-                            {% endfor %}
+                </div>
+                <div class="col-lg">
+                    <div class="why-shop-item">
+                        <div class="why-shop-icon">
+                            <i class="fas fa-rotate-left"></i>
+                        </div>
+                        <div>
+                            <div class="why-shop-title">Easy Returns</div>
+                            <div class="why-shop-sub">30-day policy</div>
                         </div>
                     </div>
-
-                    <button type="submit" class="btn btn-primary w-100 fw-bold py-2 font-sm shadow-sm" style="min-height: 44px;">
-                        <i class="fas fa-check me-2"></i> Apply Filters
-                    </button>
-                </form>
+                </div>
+                <div class="col-lg">
+                    <div class="why-shop-item">
+                        <div class="why-shop-icon">
+                            <i class="fas fa-leaf"></i>
+                        </div>
+                        <div>
+                            <div class="why-shop-title">Sustainable Products</div>
+                            <div class="why-shop-sub">Better for tomorrow</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg">
+                    <div class="why-shop-item">
+                        <div class="why-shop-icon">
+                            <i class="far fa-heart"></i>
+                        </div>
+                        <div>
+                            <div class="why-shop-title">Happy Customers</div>
+                            <div class="why-shop-sub">Trusted by thousands</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+    </section>
 
-        <!-- Products Grid Area -->
-        <div class="col-lg-9">
-            {% if new_arrivals %}
-            <section class="mb-4">
-                <div class="section-header">
-                    <h2 class="section-title"><i class="fas fa-sparkles text-warning"></i> Featured & New Arrivals</h2>
-                    <a href="{{ url_for('main.catalog', sort_by='newest') }}" class="text-primary font-sm fw-bold">
-                        Browse All &rarr;
-                    </a>
+    <!-- 8. Join Our Community (Newsletter Section) -->
+    <section class="mb-5">
+        <div class="newsletter-card-nimble">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <h3 class="newsletter-title">Join Our Community</h3>
+                    <p class="newsletter-sub mb-4">
+                        Be the first to know about new arrivals, exclusive deals, and special offers.
+                    </p>
+                    <form action="#" method="POST" class="newsletter-form" onsubmit="event.preventDefault(); showToast('Thank you for joining our newsletter!', 'success');">
+                        <input type="email" class="newsletter-input" placeholder="Enter your email address" required>
+                        <button type="submit" class="btn-subscribe">Subscribe</button>
+                    </form>
                 </div>
-
-                <div class="row g-4">
-                    {% for prod in new_arrivals %}
-                    <div class="col-lg-4 col-md-6 col-sm-6">
-                        {% include "partials/product_card.html" %}
+                <div class="col-lg-5 d-none d-lg-block text-end">
+                    <div class="newsletter-sticker">
+                        <div class="newsletter-script">
+                            Good People<br>Brighter Days ♡
+                        </div>
+                        <i class="fas fa-leaf text-success display-4"></i>
                     </div>
-                    {% endfor %}
                 </div>
-            </section>
-            {% endif %}
+            </div>
         </div>
-    </div>
+    </section>
+
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const categorySelect = document.getElementById('categoryFilter');
-        const brandSelect = document.getElementById('brandFilter');
-
-        if (categorySelect && brandSelect) {
-            categorySelect.addEventListener('change', function () {
-                const categorySlug = this.value || 'all';
-
-                fetch(`/api/categories/${categorySlug}/brands`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            const currentBrand = brandSelect.value;
-                            brandSelect.innerHTML = '<option value="">All Brands</option>';
-                            let brandFound = false;
-
-                            data.brands.forEach(brand => {
-                                const option = document.createElement('option');
-                                option.value = brand.name;
-                                option.textContent = brand.name;
-                                if (brand.name === currentBrand) {
-                                    option.selected = true;
-                                    brandFound = true;
-                                }
-                                brandSelect.appendChild(option);
-                            });
-
-                            if (!brandFound && currentBrand) {
-                                brandSelect.value = '';
-                            }
-                        }
-                    })
-                    .catch(error => console.error('Error fetching brands:', error));
-            });
-        }
-    });
-</script>
 {% endblock %}

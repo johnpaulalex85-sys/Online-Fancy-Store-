@@ -16,7 +16,14 @@ class MongoDB:
         uri = app.config.get('MONGODB_URI', 'mongodb://localhost:27017/')
         db_name = app.config.get('MONGODB_DB_NAME', 'fancy_store_db')
         try:
-            self.client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+            self.client = MongoClient(
+                uri,
+                serverSelectionTimeoutMS=3000,
+                connectTimeoutMS=3000,
+                socketTimeoutMS=10000,
+                maxPoolSize=50,
+                minPoolSize=5
+            )
             self.db = self.client[db_name]
             # Verify connection
             self.client.admin.command('ping')
@@ -107,6 +114,60 @@ class MongoDB:
 
             # 13. settings
             self.db.settings.create_index("key", unique=True)
+
+            # Ensure default super admin exists
+            if self.db.admins.count_documents({"email": "admin@fancystore.com"}) == 0:
+                from werkzeug.security import generate_password_hash
+                import datetime, uuid
+                self.db.admins.insert_one({
+                    "_id": str(uuid.uuid4()),
+                    "name": "Super Admin",
+                    "email": "admin@fancystore.com",
+                    "password": generate_password_hash("admin123"),
+                    "role": "super_admin",
+                    "status": "active",
+                    "created_at": datetime.datetime.now()
+                })
+
+            # Ensure default ad banners exist if empty
+            if self.db.banners.count_documents({}) == 0:
+                import datetime, uuid
+                default_banners = [
+                    {
+                        "_id": str(uuid.uuid4()),
+                        "title": "Exclusive Tech & Mobile Deals",
+                        "subtitle": "Up to 30% Off New Smartphone Arrivals",
+                        "image_url": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80",
+                        "link_url": "/catalog",
+                        "banner_type": "homepage",
+                        "position": 1,
+                        "status": "active",
+                        "created_at": datetime.datetime.now()
+                    },
+                    {
+                        "_id": str(uuid.uuid4()),
+                        "title": "Modern Home & Lifestyle Essentials",
+                        "subtitle": "Transform your living space with luxury essentials",
+                        "image_url": "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&w=1200&q=80",
+                        "link_url": "/catalog",
+                        "banner_type": "homepage",
+                        "position": 2,
+                        "status": "active",
+                        "created_at": datetime.datetime.now()
+                    },
+                    {
+                        "_id": str(uuid.uuid4()),
+                        "title": "Curated Fashion & Beauty Collections",
+                        "subtitle": "Premium quality guaranteed & fast shipping",
+                        "image_url": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80",
+                        "link_url": "/catalog",
+                        "banner_type": "homepage",
+                        "position": 3,
+                        "status": "active",
+                        "created_at": datetime.datetime.now()
+                    }
+                ]
+                self.db.banners.insert_many(default_banners)
 
             logger.info("MongoDB database indexes verified and initialized.")
         except Exception as e:

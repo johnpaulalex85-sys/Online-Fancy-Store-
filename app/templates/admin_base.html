@@ -4,270 +4,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Enterprise Admin Dashboard - Fancy Store{% endblock %}</title>
+    <title>{% block title %}Overview - Admin Panel{% endblock %}</title>
+    <!-- DNS Prefetch for Fast Resource Loading -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
+    <!-- Google Fonts: Playfair Display, Inter, Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,500&display=swap"
         rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <style>
-        :root {
-            --admin-bg: #0f172a;
-            --admin-sidebar-width: 260px;
-            --admin-accent: #3b82f6;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-            color: #1e293b;
-            margin: 0;
-            padding: 0;
-        }
-
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6 {
-            font-family: 'Outfit', sans-serif;
-        }
-
-        .sidebar {
-            width: var(--admin-sidebar-width);
-            background: var(--admin-bg);
-            color: #94a3b8;
-            min-height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-            padding: 1.5rem 1rem;
-            overflow-y: auto;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar .brand-logo {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #fff;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 2rem;
-            padding-left: 0.5rem;
-        }
-
-        .sidebar .nav-link {
-            color: #94a3b8;
-            font-weight: 500;
-            font-size: 0.9rem;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 0.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            transition: all 0.2s;
-        }
-
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar .nav-link.active {
-            background: var(--admin-accent);
-            font-weight: 600;
-        }
-
-        .sidebar .nav-heading {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #64748b;
-            margin: 1.5rem 0 0.5rem 0.75rem;
-        }
-
-        .main-wrapper {
-            margin-left: var(--admin-sidebar-width);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s ease;
-        }
-
-        .topbar {
-            height: 70px;
-            background: #fff;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 999;
-        }
-
-        .content-area {
-            padding: 2rem;
-            flex-fill: 1;
-        }
-
-        .card-kpi {
-            border: none;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            background: #fff;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s;
-        }
-
-        .card-kpi:hover {
-            transform: translateY(-3px);
-        }
-
-        .badge-status {
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 0.35rem 0.75rem;
-            border-radius: 9999px;
-        }
-
-        @media (max-width: 991.98px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .sidebar.show {
-                transform: translateX(0);
-            }
-
-            .main-wrapper {
-                margin-left: 0;
-            }
-        }
-    </style>
+    <!-- Vogue & Co. Organic Luxury Admin CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    {% block extra_css %}{% endblock %}
 </head>
 
-<body>
+<body class="admin-body">
 
     <!-- ================= Sidebar Navigation ================= -->
-    <aside class="sidebar" id="adminSidebar">
-        <a href="{{ url_for('admin.orders_list') }}" class="brand-logo">
-            <span class="bg-primary text-white rounded-3 p-2 d-inline-flex align-items-center justify-content-center"
-                style="width: 40px; height: 40px;">
-                <i class="fas fa-layer-group"></i>
-            </span>
-            <span>{{ store_settings.get('store_name', 'Fancy Store') }} Admin</span>
+    <aside class="admin-sidebar-vogue" id="adminSidebar">
+        <!-- Brand Title -->
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-brand-vogue">
+            <i class="fas fa-layer-group text-dark"></i>
+            <span>{{ store_settings.get('store_name', 'VOGUE & CO.') }}</span>
         </a>
 
-        <ul class="nav flex-column">
+        <!-- Main Navigation Links -->
+        <ul class="admin-nav-vogue">
             <li class="nav-item">
-                <a class="nav-link {% if 'orders' in request.endpoint %}active{% endif %}"
+                <a class="admin-nav-link-vogue {% if request.endpoint == 'admin.dashboard' %}active{% endif %}"
+                    href="{{ url_for('admin.dashboard') }}">
+                    <i class="fas fa-sliders"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="admin-nav-link-vogue {% if 'orders' in request.endpoint and request.endpoint != 'admin.dashboard' %}active{% endif %}"
                     href="{{ url_for('admin.orders_list') }}">
-                    <i class="fas fa-shopping-bag w-5"></i> Customer Orders
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>Orders</span>
                 </a>
             </li>
 
             {% if current_user.role != 'delivery' %}
             <li class="nav-item">
-                <a class="nav-link {% if 'subadmins' in request.endpoint %}active{% endif %}"
-                    href="{{ url_for('admin.subadmins_list') }}">
-                    <i class="fas fa-users-cog w-5"></i> Subadmin Management
-                </a>
-            </li>
-            {% endif %}
-
-            {% if current_user.role != 'delivery' %}
-            <div class="nav-heading">Catalog &amp; Inventory</div>
-            <li class="nav-item">
-                <a class="nav-link {% if 'products' in request.endpoint %}active{% endif %}"
+                <a class="admin-nav-link-vogue {% if request.endpoint == 'admin.products_list' %}active{% endif %}"
                     href="{{ url_for('admin.products_list') }}">
-                    <i class="fas fa-boxes w-5"></i> Products Catalog
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {% if 'categories' in request.endpoint %}active{% endif %}"
-                    href="{{ url_for('admin.categories_list') }}">
-                    <i class="fas fa-tags w-5"></i> Categories
+                    <i class="fas fa-boxes-stacked"></i>
+                    <span>Products Catalog</span>
                 </a>
             </li>
 
-            <div class="nav-heading">Store Configuration</div>
             <li class="nav-item">
-                <a class="nav-link {% if 'location_settings' in request.endpoint %}active{% endif %} text-info fw-bold"
-                    href="{{ url_for('admin.location_settings') }}">
-                    <i class="fas fa-map-marked-alt w-5"></i> Store Location Setup
+                <a class="admin-nav-link-vogue {% if request.endpoint == 'admin.product_add' %}active{% endif %}"
+                    href="{{ url_for('admin.product_add') }}">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Product Creation</span>
                 </a>
             </li>
+
             <li class="nav-item">
-                <a class="nav-link {% if 'settings' in request.endpoint and 'location_settings' not in request.endpoint %}active{% endif %}"
-                    href="{{ url_for('admin.settings') }}">
-                    <i class="fas fa-cog w-5"></i> Global Settings
+                <a class="admin-nav-link-vogue {% if request.endpoint == 'admin.categories_list' %}active{% endif %}"
+                    href="{{ url_for('admin.categories_list') }}">
+                    <i class="fas fa-tags"></i>
+                    <span>Category Creation</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="admin-nav-link-vogue {% if request.endpoint == 'admin.banners_list' %}active{% endif %}"
+                    href="{{ url_for('admin.banners_list') }}">
+                    <i class="fas fa-rectangle-ad"></i>
+                    <span>Banner Ads Management</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="admin-nav-link-vogue {% if 'subadmins' in request.endpoint or 'users' in request.endpoint %}active{% endif %}"
+                    href="{{ url_for('admin.subadmins_list') }}">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Subadmin Management</span>
                 </a>
             </li>
             {% endif %}
-
-            <div class="nav-heading">Storefront</div>
-            <li class="nav-item mt-2">
-                <a class="nav-link text-warning" href="{{ url_for('main.index') }}" target="_blank">
-                    <i class="fas fa-external-link-alt w-5"></i> View Live Store &rarr;
-                </a>
-            </li>
         </ul>
+
+        <!-- Bottom Sidebar Utility Icons -->
+        <div class="mt-auto pt-4 border-top border-secondary-subtle d-flex flex-column gap-2">
+            <a href="https://wa.me/{{ store_settings.get('whatsapp_number', '919876543210') | replace(' ', '') | replace('+', '') }}" target="_blank" rel="noopener noreferrer" class="admin-nav-link-vogue text-success fw-bold"
+                title="Connect WhatsApp Business Account">
+                <i class="fab fa-whatsapp fs-5 text-success"></i>
+                <span>WhatsApp Business</span>
+            </a>
+            <a href="{{ url_for('main.index') }}" target="_blank" class="admin-nav-link-vogue text-muted"
+                title="View Live Store">
+                <i class="fas fa-circle-question"></i>
+                <span>Help &amp; Live Store</span>
+            </a>
+            <a href="{{ url_for('admin.settings') }}"
+                class="admin-nav-link-vogue text-muted {% if 'location_settings' in request.endpoint or 'settings' in request.endpoint %}active{% endif %}"
+                title="Settings">
+                <i class="fas fa-gear"></i>
+                <span>Settings</span>
+            </a>
+        </div>
     </aside>
 
-    <!-- ================= Main Content Wrapper ================= -->
-    <div class="main-wrapper">
+    <!-- ================= Main Wrapper ================= -->
+    <div class="admin-main-wrapper">
         <!-- Topbar -->
-        <header class="topbar">
-            <button class="btn btn-light d-lg-none" type="button"
-                onclick="document.getElementById('adminSidebar').classList.toggle('show')">
-                <i class="fas fa-bars"></i>
-            </button>
-            <div class="d-flex align-items-center gap-3 ms-auto">
-                <span
-                    class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1 rounded-pill fw-bold font-xs">
-                    <i class="fas fa-shield-alt me-1"></i>Administrator Mode
-                </span>
+        <header class="admin-topbar-vogue">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-sm btn-light d-lg-none rounded-circle p-2" type="button"
+                    onclick="document.getElementById('adminSidebar').classList.toggle('show')">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h3 class="serif-title m-0 font-extrabold text-dark fs-3">Overview</h3>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="admin-search-pill d-none d-md-block">
+                <i class="fas fa-search admin-search-icon"></i>
+                <input type="text" class="admin-search-input" placeholder="Search products, orders...">
+            </div>
+
+            <!-- Right Profile Actions -->
+            <div class="d-flex align-items-center gap-3">
+                <!-- Notification Bell -->
+                <div class="nav-icon-circle" title="Notifications">
+                    <i class="far fa-bell"></i>
+                    <span class="nav-badge-dot">7</span>
+                </div>
+
+                <!-- User Profile Dropdown -->
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle d-flex align-items-center gap-2 rounded-pill px-3"
-                        type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle fs-5 text-primary"></i>
-                        <span class="fw-bold font-sm">{{ current_user.name }}</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2 font-sm">
-                        <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i
-                                    class="fas fa-user-cog me-2"></i>My Profile</a></li>
+                    <a href="#" class="d-flex align-items-center gap-2 text-decoration-none" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+                            alt="Avatar" class="user-avatar-circle" style="width: 40px; height: 40px;">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 font-sm p-2">
+                        <li class="px-3 py-2 border-bottom mb-1">
+                            <div class="fw-bold text-dark">{{ current_user.name }}</div>
+                            <div class="text-muted font-xs">Administrator</div>
+                        </li>
+                        <li>
+                            <a class="dropdown-item rounded-3 py-2" href="{{ url_for('auth.profile') }}">
+                                <i class="fas fa-user-cog me-2 text-primary"></i>My Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item rounded-3 py-2" href="{{ url_for('admin.settings') }}">
+                                <i class="fas fa-sliders me-2 text-primary"></i>Global Settings
+                            </a>
+                        </li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i
-                                    class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        <li>
+                            <a class="dropdown-item rounded-3 py-2 text-danger" href="{{ url_for('auth.logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
         </header>
 
         <!-- Flash Messages -->
-        <div class="px-4 pt-3">
+        <div class="px-4 pt-2">
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
             {% for category, message in messages %}
             <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm rounded-4 border-0 mb-3"
                 role="alert">
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2 font-sm">
                     {% if category == 'success' %}<i class="fas fa-check-circle fs-5"></i>
                     {% elif category == 'danger' %}<i class="fas fa-exclamation-triangle fs-5"></i>
                     {% elif category == 'warning' %}<i class="fas fa-exclamation-circle fs-5"></i>
@@ -281,15 +200,10 @@
             {% endwith %}
         </div>
 
-        <!-- Content Area -->
-        <main class="content-area">
+        <!-- Main Content Area -->
+        <main class="content-area p-4 p-md-5 pt-2">
             {% block content %}{% endblock %}
         </main>
-
-        <footer class="mt-auto py-3 px-4 border-top text-center text-muted" style="font-size: 0.8rem;">
-            &copy; 2026 Fancy Store India Pvt Ltd. Enterprise Administration Panel &bull; Built with Flask &amp;
-            MongoDB.
-        </footer>
     </div>
 
     <!-- Bootstrap JS Bundle -->

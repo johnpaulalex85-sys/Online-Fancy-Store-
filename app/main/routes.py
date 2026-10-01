@@ -10,7 +10,9 @@ from app.middleware.security import sanitize_input
 def index():
     """Storefront homepage showcasing banners, flash sales, and featured collections."""
     banners = Banner.get_by_type('homepage')
-    categories = Category.get_all(parent_id=None)
+    if not banners:
+        banners = [b for b in Banner.get_all() if b.status == 'active']
+    categories = Category.get_all()
     brands = Brand.get_all()
     
     # Fetch Flash Deals (Highest discounted active items)
@@ -80,6 +82,7 @@ def catalog():
     # Execute search or filtered query
     results = Product.search(
         query=query,
+        category=cat_slug if cat_slug else None,
         category_id=cat_id,
         brand=brand_name if brand_name else None,
         min_price=min_price,
@@ -90,7 +93,7 @@ def catalog():
         per_page=12
     )
     
-    all_categories = Category.get_all(parent_id=None)
+    all_categories = Category.get_all()
     all_brands = Brand.get_all()
     
     return render_template('main/catalog.html',

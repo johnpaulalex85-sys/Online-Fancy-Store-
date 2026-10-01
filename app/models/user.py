@@ -16,7 +16,7 @@ class User(UserMixin):
         self.id = str(doc.get('_id'))
         self.name = doc.get('name', '')
         self.email = doc.get('email', '')
-        self.password_hash = doc.get('password', '')
+        self.password_hash = doc.get('password') or doc.get('password_hash') or ''
         self.phone = doc.get('phone', '')
         self.status = doc.get('status', 'active')
         self.email_verified = doc.get('email_verified', False)
@@ -33,16 +33,20 @@ class User(UserMixin):
 
     @property
     def is_admin(self):
-        return False
+        return bool(self._doc.get('is_admin', False) or self._doc.get('role') in ['admin', 'super_admin', 'delivery'])
 
     def get_id(self):
         return self.id
 
     def check_password(self, password):
+        if not self.password_hash or not password:
+            return False
         return check_password_hash(self.password_hash, password)
 
     @classmethod
     def get_by_id(cls, user_id):
+        if not user_id:
+            return None
         try:
             doc = mongo.get_collection('users').find_one({"_id": str(user_id)})
             return cls(doc) if doc else None
@@ -52,8 +56,13 @@ class User(UserMixin):
 
     @classmethod
     def get_by_email(cls, email):
+        if not email:
+            return None
         try:
-            doc = mongo.get_collection('users').find_one({"email": email.lower().strip()})
+            import re
+            clean_email = email.lower().strip()
+            pattern = f"^{re.escape(clean_email)}$"
+            doc = mongo.get_collection('users').find_one({"email": {"$regex": pattern, "$options": "i"}})
             return cls(doc) if doc else None
         except Exception as e:
             logger.error(f"Error fetching user by email {email}: {e}")
@@ -266,7 +275,7 @@ class Admin(UserMixin):
         self.id = str(doc.get('_id'))
         self.name = doc.get('name', 'Admin')
         self.email = doc.get('email', '')
-        self.password_hash = doc.get('password', '')
+        self.password_hash = doc.get('password') or doc.get('password_hash') or ''
         self.role = doc.get('role', 'admin')
         self.status = doc.get('status', 'active')
         self.last_login = doc.get('last_login')
@@ -286,6 +295,8 @@ class Admin(UserMixin):
         return self.id
 
     def check_password(self, password):
+        if not self.password_hash or not password:
+            return False
         return check_password_hash(self.password_hash, password)
 
     def update_password(self, new_password):
@@ -328,8 +339,12 @@ class Admin(UserMixin):
 
     @classmethod
     def get_by_id(cls, admin_id):
+        if not admin_id:
+            return None
         try:
             doc = mongo.get_collection('admins').find_one({"_id": str(admin_id)})
+            if not doc:
+                doc = mongo.get_collection('users').find_one({"_id": str(admin_id), "$or": [{"is_admin": True}, {"role": {"$in": ["admin", "super_admin", "delivery"]}}]})
             return cls(doc) if doc else None
         except Exception as e:
             logger.error(f"Error fetching admin by id {admin_id}: {e}")
@@ -337,8 +352,15 @@ class Admin(UserMixin):
 
     @classmethod
     def get_by_email(cls, email):
+        if not email:
+            return None
         try:
-            doc = mongo.get_collection('admins').find_one({"email": email.lower().strip()})
+            import re
+            clean_email = email.lower().strip()
+            pattern = f"^{re.escape(clean_email)}$"
+            doc = mongo.get_collection('admins').find_one({"email": {"$regex": pattern, "$options": "i"}})
+            if not doc:
+                doc = mongo.get_collection('users').find_one({"email": {"$regex": pattern, "$options": "i"}, "$or": [{"is_admin": True}, {"role": {"$in": ["admin", "super_admin", "delivery"]}}]})
             return cls(doc) if doc else None
         except Exception as e:
             logger.error(f"Error fetching admin by email {email}: {e}")

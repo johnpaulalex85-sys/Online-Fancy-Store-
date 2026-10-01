@@ -1,74 +1,292 @@
 /* ==========================================================================
-   Fancy Store - Responsive Styles for All Viewports (Mobile & Tablet)
+   NimbleCart / Fancy Store - Mobile Responsive Stylesheet
+   Comprehensive Mobile UI Optimization (Smartphones & Tablets)
    ========================================================================== */
 
-@media (max-width: 991.98px) {
-  .search-container {
-    max-width: 100%;
-    margin: 12px 0 4px 0;
+/* 1. Mobile Bottom Dock Buffer & Main Layout */
+@media (max-width: 767.98px) {
+  main {
+    padding-bottom: 90px !important; /* Prevents content from hiding behind mobile bottom nav bar */
+  }
+
+  /* Header & Navigation Fixes */
+  .header-nimble {
+    padding: 10px 0;
+  }
+
+  .brand-title {
+    font-size: 1.35rem;
+  }
+
+  .brand-subtitle {
+    display: none !important;
+  }
+
+  /* Full-width Search Bar on Mobile */
+  .search-container-nimble {
     order: 3;
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 8px 0 2px 0 !important;
   }
 
-  .navbar-fancy .container {
-    flex-wrap: wrap;
+  .search-input-pill {
+    padding: 8px 40px 8px 16px;
+    font-size: 0.88rem;
   }
 
-  .category-nav-bar .container {
-    overflow-x: auto;
-    white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px;
+  .search-btn-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
   }
 
-  .product-title {
-    font-size: 1rem;
-    height: 2.8em;
+  .nav-icon-link span {
+    font-size: 0.72rem;
   }
 
-  .offer-price {
-    font-size: 1.25rem;
+  /* Hero Banner Section Fixes */
+  .hero-nimble-card {
+    padding: 20px 16px !important;
+    border-radius: 20px !important;
   }
 
-  .btn-add-cart {
-    min-height: 48px;
-    font-size: 1rem;
+  .hero-subtitle-tag {
+    font-size: 0.95rem;
+    margin-bottom: 4px;
   }
 
-  .main-detail-img-box {
-    height: 320px;
-  }
-}
-
-@media (max-width: 575.98px) {
-  .brand-logo {
-    font-size: 1.4rem;
+  .hero-title-main {
+    font-size: 1.75rem !important;
+    line-height: 1.2 !important;
+    margin-bottom: 10px !important;
+    letter-spacing: -0.4px !important;
   }
 
-  .nav-action-btn {
-    padding: 6px 10px;
-    min-height: 44px;
+  .hero-desc-text {
+    font-size: 0.88rem !important;
+    margin-bottom: 16px !important;
+    line-height: 1.45 !important;
   }
 
-  .nav-action-btn span {
+  .btn-nimble-cta {
+    padding: 10px 22px !important;
+    font-size: 0.88rem !important;
+  }
+
+  .hero-img-container {
+    height: 220px !important;
+    border-radius: 16px !important;
+  }
+
+  .hero-trust-row {
+    margin-top: 18px !important;
+    gap: 12px !important;
+  }
+
+  .hero-trust-item {
+    font-size: 0.78rem !important;
+  }
+
+  .hero-ad-badge {
+    top: 10px;
+    left: 10px;
+    padding: 3px 10px;
+    font-size: 0.65rem;
+  }
+
+  .hero-ad-caption {
+    padding: 24px 14px 12px 14px;
+  }
+
+  .hero-ad-caption h5 {
+    font-size: 0.98rem;
+  }
+
+  .hero-ad-caption p {
     font-size: 0.75rem;
   }
 
-  .top-trust-badge span {
-    display: none;
+  /* Category Circles Horizontally Scrollable Track Mobile Fixes */
+  .category-circles-section {
+    padding: 10px 0 16px 0;
   }
 
-  .hero-banner-img {
-    height: 220px;
+  .category-circles-track {
+    gap: 14px !important;
+    padding: 4px 2px 8px 2px !important;
+    scrollbar-width: none !important; /* Hide scrollbar on mobile for native app feel */
   }
 
-  .section-title {
-    font-size: 1.25rem;
+  .category-circles-track::-webkit-scrollbar {
+    display: none !important;
   }
 
-  .btn-cta-buy,
-  .btn-cta-cart {
-    width: 100%;
-    min-height: 50px;
+  .category-circle-card-item {
+    width: 72px !important;
+    gap: 6px !important;
+  }
+
+  .category-circle-icon-box {
+    width: 62px !important;
+    height: 62px !important;
+    font-size: 1.3rem !important;
+  }
+
+  .category-circle-item-label {
+    font-size: 0.74rem !important;
+  }
+
+  /* Category Promo Banner Cards Horizontally Scrollable Track Fixes */
+  .promo-banners-track {
+    gap: 16px !important;
+    padding: 4px 2px 12px 2px !important;
+    scrollbar-width: none !important;
+  }
+
+  .promo-banners-track::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .promo-banner-card-item {
+    width: 310px !important;
+  }
+
+  .promo-banner-card {
+    padding: 20px 16px !important;
+    flex-direction: column-reverse !important;
+    align-items: flex-start !important;
+    border-radius: 20px !important;
+  }
+
+  .promo-content {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .promo-title {
+    font-size: 1.35rem !important;
+    margin-bottom: 4px !important;
+  }
+
+  .promo-desc {
+    font-size: 0.85rem !important;
+    margin-bottom: 14px !important;
+  }
+
+  .promo-img-wrapper {
+    width: 100% !important;
+    height: 140px !important;
+    margin-bottom: 14px !important;
+  }
+
+  /* Product Cards 2-Column Responsive Layout */
+  .product-card-nimble {
+    padding: 10px !important;
+    border-radius: 16px !important;
+  }
+
+  .product-thumb-nimble {
+    height: 140px !important;
+    padding: 8px !important;
+    margin-bottom: 8px !important;
+    border-radius: 12px !important;
+  }
+
+  .product-title-nimble {
+    font-size: 0.82rem !important;
+    height: 2.4em;
+    line-height: 1.25;
+    margin-bottom: 3px !important;
+  }
+
+  .product-price-nimble {
+    font-size: 0.92rem !important;
+    margin-bottom: 2px !important;
+  }
+
+  .product-price-original {
+    font-size: 0.75rem !important;
+  }
+
+  .product-stars-row {
+    font-size: 0.72rem !important;
+  }
+
+  .product-reviews-count {
+    font-size: 0.7rem !important;
+  }
+
+  .btn-wishlist-circle {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.78rem !important;
+    top: 6px !important;
+    right: 6px !important;
+  }
+
+  .btn-quick-cart-circle {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 0.82rem !important;
+    bottom: 6px !important;
+    right: 6px !important;
+  }
+
+  /* Why Shop With Us Card */
+  .why-shop-card {
+    padding: 20px 16px !important;
+    margin: 24px 0 !important;
+    border-radius: 20px !important;
+  }
+
+  .why-shop-header {
+    font-size: 1.1rem !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Newsletter Section */
+  .newsletter-card-nimble {
+    padding: 24px 16px !important;
+    border-radius: 20px !important;
+  }
+
+  .newsletter-title {
+    font-size: 1.35rem !important;
+  }
+
+  .newsletter-sub {
+    font-size: 0.85rem !important;
+  }
+
+  .newsletter-form {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .btn-subscribe {
+    width: 100% !important;
+  }
+
+  /* Footer Modifications */
+  .footer-nimble {
+    padding-bottom: 80px !important;
+  }
+}
+
+/* Extra Small Mobile Devices (< 380px) */
+@media (max-width: 380px) {
+  .brand-title {
+    font-size: 1.15rem;
+  }
+
+  .category-circle-icon {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 1.1rem !important;
+  }
+
+  .product-thumb-nimble {
+    height: 120px !important;
   }
 }

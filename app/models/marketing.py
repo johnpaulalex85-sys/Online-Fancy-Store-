@@ -103,8 +103,12 @@ class Coupon:
         mongo.get_collection('coupons').update_one({"_id": self.id}, {"$set": {"status": self.status}})
 
 
+_BANNERS_CACHE = None
+_BANNERS_CACHE_TIME = 0.0
+BANNERS_TTL = 60.0  # seconds
+
 class Banner:
-    """Banner model wrapping the MongoDB 'banners' collection."""
+    """Banner model wrapping the MongoDB 'banners' collection with in-memory caching."""
     def __init__(self, doc):
         self._doc = doc
         self.id = str(doc.get('_id'))
@@ -118,14 +122,36 @@ class Banner:
         self.created_at = doc.get('created_at')
 
     @classmethod
+    def _fetch_all_cached(cls):
+        global _BANNERS_CACHE, _BANNERS_CACHE_TIME
+        now = datetime.datetime.now().timestamp()
+        if _BANNERS_CACHE is not None and (now - _BANNERS_CACHE_TIME) < BANNERS_TTL:
+            return _BANNERS_CACHE
+        try:
+            cursor = mongo.get_collection('banners').find().sort([("banner_type", 1), ("position", 1)])
+            docs = list(cursor)
+            _BANNERS_CACHE = docs
+            _BANNERS_CACHE_TIME = now
+            return docs
+        except Exception:
+            return _BANNERS_CACHE or []
+
+    @classmethod
+    def clear_cache(cls):
+        global _BANNERS_CACHE, _BANNERS_CACHE_TIME
+        _BANNERS_CACHE = None
+        _BANNERS_CACHE_TIME = 0.0
+
+    @classmethod
     def get_by_type(cls, banner_type="homepage"):
-        cursor = mongo.get_collection('banners').find({"status": "active", "banner_type": banner_type}).sort("position", 1)
-        return [cls(doc) for doc in cursor]
+        docs = cls._fetch_all_cached()
+        matching = [d for d in docs if d.get('status') == 'active' and d.get('banner_type') == banner_type]
+        return [cls(doc) for doc in matching]
 
     @classmethod
     def get_all(cls):
-        cursor = mongo.get_collection('banners').find().sort([("banner_type", 1), ("position", 1)])
-        return [cls(doc) for doc in cursor]
+        docs = cls._fetch_all_cached()
+        return [cls(doc) for doc in docs]
 
     @classmethod
     def get_by_id(cls, banner_id):
@@ -148,6 +174,7 @@ class Banner:
             "created_at": datetime.datetime.now()
         }
         mongo.get_collection('banners').insert_one(doc)
+        cls.clear_cache()
         return cls(doc)
 
     def update(self, title, subtitle, image_url, link_url, banner_type, position, status="active"):
@@ -166,13 +193,16 @@ class Banner:
                 "position": self.position, "status": self.status
             }}
         )
+        Banner.clear_cache()
 
     def delete(self):
         mongo.get_collection('banners').delete_one({"_id": self.id})
+        Banner.clear_cache()
 
     def toggle_status(self):
         self.status = 'disabled' if self.status == 'active' else 'active'
         mongo.get_collection('banners').update_one({"_id": self.id}, {"$set": {"status": self.status}})
+        Banner.clear_cache()
 
 
 class Review:
@@ -253,24 +283,49 @@ class Review:
             prod.update_rating_stats()
 
 
+_SETTINGS_CACHE = {}
+_SETTINGS_CACHE_TIME = 0.0
+SETTINGS_TTL = 60.0  # seconds
+
 class Setting:
-    """Setting model wrapping the MongoDB 'settings' collection."""
+    """Setting model wrapping the MongoDB 'settings' collection with in-memory TTL caching."""
     @classmethod
     def get_all(cls):
+        global _SETTINGS_CACHE, _SETTINGS_CACHE_TIME
+        now = datetime.datetime.now().timestamp()
+        if _SETTINGS_CACHE and (now - _SETTINGS_CACHE_TIME) < SETTINGS_TTL:
+            return dict(_SETTINGS_CACHE)
         settings = {}
-        for doc in mongo.get_collection('settings').find():
-            settings[doc['key']] = doc['value']
-        return settings
+        try:
+            for doc in mongo.get_collection('settings').find():
+                settings[doc['key']] = doc['value']
+            _SETTINGS_CACHE = settings
+            _SETTINGS_CACHE_TIME = now
+        except Exception as e:
+            logger.error(f"Error fetching settings: {e}")
+        return settings or dict(_SETTINGS_CACHE)
 
     @classmethod
     def get(cls, key, default=None):
-        doc = mongo.get_collection('settings').find_one({"key": key})
-        return doc['value'] if doc else default
+        all_settings = cls.get_all()
+        return all_settings.get(key, default)
 
     @classmethod
     def set(cls, key, value):
-        mongo.get_collection('settings').update_one(
-            {"key": key},
-            {"$set": {"value": value, "updated_at": datetime.datetime.now()}},
-            upsert=True
-        )
+        global _SETTINGS_CACHE, _SETTINGS_CACHE_TIME
+        try:
+            mongo.get_collection('settings').update_one(
+                {"key": key},
+                {"$set": {"value": value, "updated_at": datetime.datetime.now()}},
+                upsert=True
+            )
+            _SETTINGS_CACHE[key] = value
+            _SETTINGS_CACHE_TIME = datetime.datetime.now().timestamp()
+        except Exception as e:
+            logger.error(f"Error setting configuration {key}: {e}")
+
+    @classmethod
+    def clear_cache(cls):
+        global _SETTINGS_CACHE, _SETTINGS_CACHE_TIME
+        _SETTINGS_CACHE = {}
+        _SETTINGS_CACHE_TIME = 0.0

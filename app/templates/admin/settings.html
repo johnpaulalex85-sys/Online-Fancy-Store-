@@ -30,21 +30,31 @@
                     </div>
                     
                     <div class="row g-3 mb-4">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             {{ settings_form.contact_email.label(class="form-label fw-bold font-sm") }}
                             {{ settings_form.contact_email(class="form-control form-control-fancy") }}
                             {% for error in settings_form.contact_email.errors %}
                                 <div class="text-danger font-xs mt-1">{{ error }}</div>
                             {% endfor %}
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             {{ settings_form.contact_phone.label(class="form-label fw-bold font-sm") }}
                             {{ settings_form.contact_phone(class="form-control form-control-fancy") }}
                             {% for error in settings_form.contact_phone.errors %}
                                 <div class="text-danger font-xs mt-1">{{ error }}</div>
                             {% endfor %}
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            {{ settings_form.whatsapp_number.label(class="form-label fw-bold font-sm") }}
+                            <div class="input-group">
+                                <span class="input-group-text bg-success-subtle text-success border-end-0"><i class="fab fa-whatsapp"></i></span>
+                                {{ settings_form.whatsapp_number(class="form-control form-control-fancy border-start-0", placeholder="+91 9876543210") }}
+                            </div>
+                            {% for error in settings_form.whatsapp_number.errors %}
+                                <div class="text-danger font-xs mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-3">
                             {{ settings_form.delivery_charge_per_km.label(class="form-label fw-bold font-sm") }}
                             <div class="input-group">
                                 <span class="input-group-text">{{ store_settings.get('currency_symbol', '₹') }}</span>
@@ -101,6 +111,59 @@
                     </div>
                     
                     {{ password_form.submit_password(class="btn btn-danger w-100 fw-bold rounded-pill shadow-sm") }}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WhatsApp Business Integration Card -->
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 bg-white">
+            <div class="card-header bg-transparent border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fab fa-whatsapp text-success fs-4"></i>
+                    <h5 class="fw-bold m-0 text-success">WhatsApp Business Integration</h5>
+                </div>
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill font-xs fw-bold">
+                    <i class="fas fa-circle text-success me-1 font-xxs"></i> Active & Connected
+                </span>
+            </div>
+            <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <h6 class="fw-bold mb-1">Connect & Launch WhatsApp Business</h6>
+                    <p class="text-muted font-sm m-0">Direct customer WhatsApp widget is live on store pages. Launch WhatsApp Business Web or App with account number (<strong>{{ store_settings.get('whatsapp_number', '+91 98765 43210') }}</strong>).</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="https://wa.me/{{ store_settings.get('whatsapp_number', '919876543210') | replace(' ', '') | replace('+', '') }}"
+                       target="_blank" rel="noopener noreferrer" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm">
+                        <i class="fab fa-whatsapp me-2 fs-5"></i>Connect WhatsApp Business
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Database Demo Data Seeder Card -->
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 bg-white">
+            <div class="card-header bg-transparent border-bottom px-4 py-3 d-flex align-items-center gap-2">
+                <i class="fas fa-database text-warning fs-5"></i>
+                <h5 class="fw-bold m-0">Demo & Initial Data Seeder</h5>
+            </div>
+            <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <h6 class="fw-bold mb-1">Populate Default Demo Catalog & Data</h6>
+                    <p class="text-muted font-sm m-0">Re-seed all 13 MongoDB collections with sample Flipkart-style categories, top brands, products, promo coupons, hero banners, customer accounts, and sample orders.</p>
+                </div>
+                <form method="POST" action="{{ url_for('admin.seed_demo_data') }}" onsubmit="return confirm('Are you sure you want to seed default demo data? This will reset store catalog collections with fresh demo content.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm text-dark">
+                        <i class="fas fa-sync-alt me-2"></i>Seed Default Demo Data
+                    </button>
                 </form>
             </div>
         </div>

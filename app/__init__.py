@@ -58,41 +58,52 @@ def create_app(config_name='default'):
         except ImportError as e:
             logger.warning(f"Could not register admin_bp: {e}")
 
-    # Register Global Context Processor
+    # Browser cache control for static assets
+    @app.after_request
+    def add_browser_cache_headers(response):
+        if request.path.startswith('/static/'):
+            response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+        return response
+
+    # Register Global Context Processor (High-performance in-memory cached)
     @app.context_processor
     def inject_global_data():
         from flask_login import current_user
+        from app.models.marketing import Setting
+        from app.models.product import Category
         
-        settings = {}
+        settings = Setting.get_all()
         nav_categories = []
         cart_count = 0
         wishlist_count = 0
         
         try:
             if mongo.db is not None:
-                # Load Store Settings
-                for s in mongo.db.settings.find():
-                    settings[s['key']] = s['value']
+                cats = Category.get_all_active()
+                nav_categories = [{
+                    'id': c.id,
+                    'name': c.name,
+                    'slug': c.slug,
+                    'icon': c.icon,
+                    'image': c.image,
+                    'description': c.description,
+                    'parent_id': c.parent_id
+                } for c in cats]
                 
-                # Load Active Navigation Categories for Mega Menu
-                nav_categories = list(mongo.db.categories.find({"parent_id": None, "status": "active"}).sort("display_order", 1))
-                for cat in nav_categories:
-                    cat['subcategories'] = list(mongo.db.categories.find({"parent_id": cat['_id'], "status": "active"}).sort("display_order", 1))
-                
-                # Load Cart & Wishlist Badge Counts
+                # Fast projection lookup for Cart & Wishlist counts
                 if current_user.is_authenticated and hasattr(current_user, 'id'):
-                    cart_doc = mongo.db.cart.find_one({"user_id": current_user.id})
+                    cart_doc = mongo.db.cart.find_one({"user_id": current_user.id}, {"items": 1})
                     if cart_doc and 'items' in cart_doc:
                         cart_count = sum(item.get('quantity', 1) for item in cart_doc['items'])
-                    wish_doc = mongo.db.wishlist.find_one({"user_id": current_user.id})
+                    wish_doc = mongo.db.wishlist.find_one({"user_id": current_user.id}, {"product_ids": 1})
                     if wish_doc and 'product_ids' in wish_doc:
                         wishlist_count = len(wish_doc['product_ids'])
                 elif 'session_id' in session:
-                    cart_doc = mongo.db.cart.find_one({"session_id": session['session_id']})
+                    cart_doc = mongo.db.cart.find_one({"session_id": session['session_id']}, {"items": 1})
                     if cart_doc and 'items' in cart_doc:
                         cart_count = sum(item.get('quantity', 1) for item in cart_doc['items'])
         except Exception as e:
-            logger.debug(f"Context processor query error (db might not be ready): {e}")
+            logger.debug(f"Context processor query error: {e}")
 
         return dict(
             store_settings=settings,

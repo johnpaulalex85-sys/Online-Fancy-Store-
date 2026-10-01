@@ -24,8 +24,11 @@
 
                 <!-- Card Body -->
                 <div class="p-4 p-md-5">
-                    <form method="POST" action="{% if is_admin_login %}{{ url_for('auth.admin_login', next=request.args.get('next')) }}{% else %}{{ url_for('auth.login', next=request.args.get('next')) }}{% endif %}">
+                    <form method="POST" action="{% if is_admin_login %}{{ url_for('auth.admin_login') }}{% else %}{{ url_for('auth.login') }}{% endif %}">
                         {{ form.hidden_tag() }}
+                        {% if request.args.get('next') %}
+                            <input type="hidden" name="next" value="{{ request.args.get('next') }}">
+                        {% endif %}
 
                         <!-- Email Field -->
                         <div class="mb-3">
@@ -45,7 +48,7 @@
                         <!-- Password Field -->
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center">
-                                <label for="password" class="form-label fw-semibold font-sm">
+                                <label for="password-input" class="form-label fw-semibold font-sm">
                                     <i class="fas fa-key text-primary me-2"></i>{{ form.password.label.text }}
                                 </label>
                                 <a href="{{ url_for('auth.forgot_password') }}" class="font-xs text-primary text-decoration-none">Forgot Password?</a>

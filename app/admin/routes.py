@@ -297,9 +297,23 @@ def categories_list():
     form.parent_id.choices = [('', 'None (Top Level Category)')] + [(c.id, c.name) for c in categories if not c.parent_id]
     
     if form.validate_on_submit():
+        image_url = form.image.data.strip() if form.image.data else ""
+        if form.image_upload.data:
+            file = form.image_upload.data
+            filename = secure_filename(file.filename)
+            if filename:
+                upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'categories')
+                os.makedirs(upload_dir, exist_ok=True)
+                unique_filename = f"{uuid.uuid4().hex}_{filename}"
+                file.save(os.path.join(upload_dir, unique_filename))
+                image_url = f"/static/uploads/categories/{unique_filename}"
+
         Category.create(
             name=sanitize_input(form.name.data),
-            parent_id=form.parent_id.data if form.parent_id.data else None
+            description=sanitize_input(form.description.data) if form.description.data else "",
+            parent_id=form.parent_id.data if form.parent_id.data else None,
+            icon=sanitize_input(form.icon.data or 'fa-tag'),
+            image=image_url
         )
         flash("Category added successfully!", "success")
         return redirect(url_for('admin.categories_list'))
@@ -365,19 +379,55 @@ def banners_list():
     banners = Banner.get_all()
     
     if form.validate_on_submit():
+        image_url = form.image_url.data.strip() if form.image_url.data else ""
+        if form.image_upload.data:
+            file = form.image_upload.data
+            filename = secure_filename(file.filename)
+            if filename:
+                upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'banners')
+                os.makedirs(upload_dir, exist_ok=True)
+                unique_filename = f"{uuid.uuid4().hex}_{filename}"
+                file.save(os.path.join(upload_dir, unique_filename))
+                image_url = f"/static/uploads/banners/{unique_filename}"
+
+        if not image_url:
+            image_url = "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80"
+
         Banner.create(
             title=sanitize_input(form.title.data),
             subtitle=sanitize_input(form.subtitle.data),
-            image_url=form.image_url.data.strip(),
-            link_url=form.link_url.data.strip(),
+            image_url=image_url,
+            link_url=form.link_url.data.strip() if form.link_url.data else '#',
             banner_type=form.banner_type.data,
             sort_order=form.sort_order.data,
             status=form.status.data
         )
-        flash("Promotional banner added!", "success")
+        flash("Promotional banner added successfully!", "success")
         return redirect(url_for('admin.banners_list'))
         
     return render_template('admin/banners_list.html', banners=banners, form=form)
+
+
+@admin_bp.route('/banners/delete/<banner_id>', methods=['POST'])
+def banner_delete(banner_id):
+    """Delete promotional banner ad."""
+    b = Banner.get_by_id(banner_id)
+    if b:
+        b.delete()
+        flash("Promotional banner deleted successfully.", "info")
+    else:
+        flash("Banner not found.", "warning")
+    return redirect(url_for('admin.banners_list'))
+
+
+@admin_bp.route('/banners/toggle/<banner_id>', methods=['POST'])
+def banner_toggle(banner_id):
+    """Toggle banner active/hidden status."""
+    b = Banner.get_by_id(banner_id)
+    if b:
+        b.toggle_status()
+        flash(f"Banner status updated to '{b.status}'.", "success")
+    return redirect(url_for('admin.banners_list'))
 
 
 @admin_bp.route('/reviews', methods=['GET', 'POST'])
@@ -496,6 +546,7 @@ def settings():
             Setting.set('store_name', sanitize_input(settings_form.store_name.data))
             Setting.set('contact_email', sanitize_input(settings_form.contact_email.data))
             Setting.set('contact_phone', sanitize_input(settings_form.contact_phone.data))
+            Setting.set('whatsapp_number', sanitize_input(settings_form.whatsapp_number.data))
             if settings_form.delivery_charge_per_km.data is not None:
                 Setting.set('delivery_charge_per_km', float(settings_form.delivery_charge_per_km.data))
             flash('Store configuration updated successfully!', 'success')
@@ -518,9 +569,21 @@ def settings():
         settings_form.store_name.data = Setting.get('store_name', 'Fancy Store')
         settings_form.contact_email.data = Setting.get('contact_email', 'support@fancystore.com')
         settings_form.contact_phone.data = Setting.get('contact_phone', '+91 98765 43210')
+        settings_form.whatsapp_number.data = Setting.get('whatsapp_number', '+91 98765 43210')
         settings_form.delivery_charge_per_km.data = float(Setting.get('delivery_charge_per_km', 10.0))
         
     return render_template('admin/settings.html', settings_form=settings_form, password_form=password_form)
+
+@admin_bp.route('/settings/seed-demo', methods=['POST'])
+def seed_demo_data():
+    """Trigger seeding of default demo data into MongoDB."""
+    from app.utils.seed import seed_database
+    try:
+        seed_database(current_app, production_mode=False)
+        flash('Default demo data (Products, Categories, Brands, Coupons, Banners & Sample Orders) seeded successfully!', 'success')
+    except Exception as e:
+        flash(f'Failed to seed demo data: {str(e)}', 'danger')
+    return redirect(url_for('admin.settings'))
 
 # ================= Subadmins / Delivery Boys =================
 @admin_bp.route('/subadmins', methods=['GET', 'POST'])

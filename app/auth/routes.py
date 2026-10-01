@@ -21,8 +21,8 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        email = sanitize_input(form.email.data.strip().lower())
-        user = User.get_by_email(email)
+        raw_email = form.email.data.strip().lower()
+        user = User.get_by_email(raw_email)
         
         if user and user.check_password(form.password.data):
             if user.status != 'active':
@@ -33,12 +33,12 @@ def login():
             user.update_last_login()
             
             flash(f"Welcome back, {user.name.split()[0]}!", "success")
-            next_page = request.args.get('next')
+            next_page = request.args.get('next') or request.form.get('next')
             if not next_page or not next_page.startswith('/'):
-                next_page = url_for('main.index')
+                next_page = url_for('admin.dashboard') if user.is_admin else url_for('main.index')
             return redirect(next_page)
         else:
-            admin = Admin.get_by_email(email)
+            admin = Admin.get_by_email(raw_email)
             if admin and admin.check_password(form.password.data):
                 if admin.status != 'active':
                     flash("Admin access denied. Account inactive.", "danger")
@@ -46,7 +46,7 @@ def login():
                 login_user(admin, remember=form.remember_me.data)
                 admin.update_last_login()
                 flash(f"Welcome back to Admin Portal, {admin.name}!", "success")
-                next_page = request.args.get('next')
+                next_page = request.args.get('next') or request.form.get('next')
                 if not next_page or not next_page.startswith('/'):
                     next_page = url_for('admin.dashboard')
                 return redirect(next_page)
@@ -63,19 +63,20 @@ def admin_login():
 
     form = AdminLoginForm()
     if form.validate_on_submit():
-        email = sanitize_input(form.email.data.strip().lower())
-        admin = Admin.get_by_email(email)
+        raw_email = form.email.data.strip().lower()
+        admin = Admin.get_by_email(raw_email)
         
         if admin and admin.check_password(form.password.data):
             if admin.status != 'active':
                 flash("Admin access denied. Account inactive.", "danger")
                 return redirect(url_for('auth.admin_login'))
                 
+            logout_user()
             login_user(admin, remember=form.remember_me.data)
             admin.update_last_login()
             
             flash(f"Admin Portal authenticated. Welcome, {admin.name} ({admin.role}).", "success")
-            next_page = request.args.get('next')
+            next_page = request.args.get('next') or request.form.get('next')
             if not next_page or not next_page.startswith('/admin'):
                 next_page = url_for('admin.dashboard')
             return redirect(next_page)
@@ -127,11 +128,7 @@ def logout():
 @auth_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    """Customer profile management, address book, and security settings."""
-    if getattr(current_user, 'is_admin', False):
-        flash("Admin profile settings are managed from the admin dashboard.", "info")
-        return redirect(url_for('admin.dashboard'))
-
+    """User profile management, address book, and security settings."""
     profile_form = ProfileUpdateForm(obj=current_user)
     password_form = PasswordChangeForm()
     address_form = AddressForm()

@@ -155,6 +155,16 @@ class FancyStoreAppTestCase(unittest.TestCase):
         self.assertEqual(resp_admin.status_code, 302)
         self.assertIn('/auth/admin/login', resp_admin.headers['Location'])
 
+    def test_08_user_email_lookup_escaping(self):
+        """Verify User and Admin email lookups correctly handle regex special characters and roles."""
+        from app.models.user import User, Admin
+        user = User.get_by_email('user+test@example.com')
+        self.assertIsNotNone(user)
+        
+        admin = Admin.get_by_email('admin+special@example.com')
+        self.assertIsNotNone(admin)
+        self.assertTrue(admin.is_admin)
+
 
 if __name__ == '__main__':
     unittest.main()

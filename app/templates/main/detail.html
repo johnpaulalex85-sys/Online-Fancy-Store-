@@ -1,259 +1,425 @@
 {% extends "base.html" %}
-{% block title %}{{ product.name }} - Fancy Store{% endblock %}
+{% block title %}{{ product.name }} - NimbleCart{% endblock %}
 
 {% block content %}
-<div class="container">
-    <!-- Breadcrumb -->
+<div class="container py-4">
+    <!-- Breadcrumb Navigation -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb font-sm fw-semibold">
-            <li class="breadcrumb-item"><a href="{{ url_for('main.catalog') }}">Catalog</a></li>
-            <li class="breadcrumb-item active text-truncate" style="max-width: 350px;" aria-current="page">{{ product.name }}</li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.catalog') }}" class="text-decoration-none">Catalog</a></li>
+            {% if product.brand %}
+            <li class="breadcrumb-item"><a href="{{ url_for('main.catalog', brand=product.brand) }}" class="text-decoration-none">{{ product.brand }}</a></li>
+            {% endif %}
+            <li class="breadcrumb-item active text-truncate" style="max-width: 320px;" aria-current="page">{{ product.name }}</li>
         </ol>
     </nav>
 
-    <!-- Product Detail Card -->
+    <!-- Product Detail Primary Card -->
     <div class="product-detail-card mb-5">
-        <div class="row g-4 align-items-center">
+        <div class="row g-4 lg-g-5 align-items-start">
             
-            <!-- Left Column: Image Gallery -->
+            <!-- Left Column: Product Image Gallery -->
             <div class="col-lg-6">
-                <div class="main-detail-img-box position-relative">
+                <div class="main-detail-img-box position-relative" id="main-img-container">
                     {% if product.discount > 0 %}
-                    <span class="badge-discount fs-6">{{ product.discount | int }}% OFF</span>
+                    <span class="badge-discount-glass">
+                        <i class="fas fa-fire me-1"></i> {{ product.discount | int }}% OFF
+                    </span>
                     {% endif %}
 
-                    <button type="button"
-                        class="btn-wishlist-toggle {% if product.id in session.get('wishlist_items', []) %}active{% endif %}"
-                        data-product-id="{{ product.id }}" aria-label="Add to Wishlist" title="Save to Wishlist"
-                        style="top: 16px; right: 16px; width: 46px; height: 46px; font-size: 1.25rem;">
-                        <i class="{% if product.id in session.get('wishlist_items', []) %}fas fa-heart text-danger{% else %}far fa-heart{% endif %}"></i>
-                    </button>
+                    <!-- Top Action Icons (Wishlist & Share) -->
+                    <div class="position-absolute d-flex flex-column gap-2" style="top: 16px; right: 16px; z-index: 10;">
+                        <button type="button"
+                            class="gallery-action-btn btn-wishlist-toggle {% if product.id in session.get('wishlist_items', []) %}active{% endif %}"
+                            data-product-id="{{ product.id }}" aria-label="Add to Wishlist" title="Save to Wishlist">
+                            <i class="{% if product.id in session.get('wishlist_items', []) %}fas fa-heart text-danger{% else %}far fa-heart{% endif %}"></i>
+                        </button>
 
+                        <button type="button" class="gallery-action-btn" onclick="shareProductPage()" aria-label="Share Product" title="Share Product">
+                            <i class="fas fa-share-nodes"></i>
+                        </button>
+                    </div>
+
+                    <!-- Main Showcase Image -->
                     <img id="main-product-image" src="{{ product.thumbnail }}" alt="{{ product.name }}" class="main-detail-img"
-                        onerror="this.src='https://placehold.co/500x500?text=No+Image'">
+                        onerror="this.src='https://placehold.co/600x600/333/fff?text=No+Image+Available'">
                 </div>
 
-                <!-- Thumbnails Gallery -->
-                <div class="d-flex gap-3 overflow-x-auto pt-3">
-                    <div class="border border-2 border-primary rounded-3 p-1 cursor-pointer thumb-item active-thumb" onclick="changeMainImage('{{ product.thumbnail }}', this)" style="width: 76px; height: 76px; flex-shrink: 0;">
-                        <img src="{{ product.thumbnail }}" class="w-100 h-100 object-fit-contain rounded-2" alt="Thumbnail">
+                <!-- Horizontal Image Thumbnails Gallery -->
+                <div class="thumb-strip-wrapper mt-3">
+                    <div class="thumb-item-box active-thumb" onclick="changeMainImage('{{ product.thumbnail }}', this)">
+                        <img src="{{ product.thumbnail }}" alt="Thumbnail Main">
                     </div>
                     {% if product.images %}
                         {% for img_url in product.images %}
-                            <div class="border rounded-3 p-1 cursor-pointer thumb-item" onclick="changeMainImage('{{ img_url }}', this)" style="width: 76px; height: 76px; flex-shrink: 0;">
-                                <img src="{{ img_url }}" class="w-100 h-100 object-fit-contain rounded-2" alt="Thumbnail" onerror="this.style.display='none'">
+                            {% if img_url != product.thumbnail %}
+                            <div class="thumb-item-box" onclick="changeMainImage('{{ img_url }}', this)">
+                                <img src="{{ img_url }}" alt="Thumbnail {{ loop.index }}" onerror="this.parentElement.style.display='none'">
                             </div>
+                            {% endif %}
                         {% endfor %}
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Right Column: Specs & Purchase Actions -->
+            <!-- Right Column: Specs, Pricing & Purchase Actions -->
             <div class="col-lg-6 d-flex flex-column">
-                <div class="mb-2">
-                    <span class="badge bg-primary text-white font-xs px-3 py-1 fw-extrabold text-uppercase me-2">{{ product.brand }}</span>
-                    <span class="text-muted font-xs">SKU: {{ product.sku }}</span>
-                </div>
+                <!-- Brand, SKU & Stock Status -->
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="product-brand-badge">
+                            <i class="fas fa-award"></i> {{ product.brand or 'Generic' }}
+                        </span>
+                        <span class="product-sku-pill">SKU: {{ product.sku }}</span>
+                    </div>
 
-                <h1 class="h2 fw-extrabold mb-3 text-dark">{{ product.name }}</h1>
-
-                <!-- Rating Summary -->
-                <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
-                    <span class="rating-badge fs-6">
-                        <i class="fas fa-star"></i> {{ product.rating_avg or 4.5 }}
-                    </span>
-                    <a href="#reviews-section" class="text-secondary fw-semibold font-sm">
-                        {{ product.rating_count or 12 }} Verified Customer Reviews
-                    </a>
-                    <span class="text-muted">&bull;</span>
-                    <span class="text-success fw-bold font-sm"><i class="fas fa-shield-check me-1"></i> 100% Genuine</span>
-                </div>
-
-                <!-- Clear Price Display -->
-                <div class="mb-4">
-                    <div class="d-flex align-items-baseline gap-3 flex-wrap">
-                        <span class="display-5 fw-extrabold text-dark">{{ product.price_after_discount | currency }}</span>
-                        {% if product.discount > 0 %}
-                        <span class="original-price fs-4">{{ product.regular_price | currency }}</span>
-                        <span class="badge bg-success text-white px-3 py-2 fs-6 rounded-pill">
-                            Save {{ (product.regular_price - product.price_after_discount) | currency }} ({{ product.discount | int }}% OFF)
+                    <div>
+                        {% if product.in_stock %}
+                        <span class="badge-stock-pill badge-stock-in">
+                            <span class="pulse-dot"></span> In Stock ({{ product.stock_quantity }} units left)
+                        </span>
+                        {% else %}
+                        <span class="badge-stock-pill badge-stock-out">
+                            <i class="fas fa-times-circle me-1"></i> Out of Stock
                         </span>
                         {% endif %}
                     </div>
-                    <div class="font-xs text-muted mt-1">Price inclusive of all taxes &bull; Free Express Shipping</div>
                 </div>
 
-                <!-- Variant Selector Badges -->
+                <!-- Title -->
+                <h1 class="product-detail-title mb-3">{{ product.name }}</h1>
+
+                <!-- Rating Summary & Verified Guarantee -->
+                <div class="d-flex align-items-center gap-3 flex-wrap mb-4">
+                    <a href="#reviews-section" class="rating-summary-box text-decoration-none">
+                        <span class="rating-score-pill">
+                            <i class="fas fa-star text-warning"></i> {{ product.rating_avg or 4.5 }}
+                        </span>
+                        <span class="text-dark font-sm fw-bold">
+                            {{ product.rating_count or 12 }} Ratings &amp; Reviews
+                        </span>
+                        <i class="fas fa-chevron-right text-muted font-xs me-1"></i>
+                    </a>
+
+                    <span class="text-success font-sm fw-bold d-inline-flex align-items-center gap-1">
+                        <i class="fas fa-shield-check fs-5"></i> 100% Genuine Product
+                    </span>
+                </div>
+
+                <!-- Price Box -->
+                <div class="detail-price-card">
+                    <div class="d-flex align-items-baseline gap-3 flex-wrap">
+                        <span class="price-current-main" id="unit-price-display">{{ product.price_after_discount | currency }}</span>
+                        {% if product.discount > 0 %}
+                        <span class="price-original-slashed">{{ product.regular_price | currency }}</span>
+                        <span class="badge-save-amount">
+                            <i class="fas fa-tag me-1"></i> Save {{ (product.regular_price - product.price_after_discount) | currency }} ({{ product.discount | int }}% OFF)
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="font-xs text-muted mt-2 d-flex align-items-center gap-3">
+                        <span><i class="fas fa-file-invoice-dollar me-1"></i> Price includes all applicable taxes</span>
+                        <span>&bull;</span>
+                        <span class="text-primary fw-semibold"><i class="fas fa-truck-fast me-1"></i> Free Shipping Available</span>
+                    </div>
+                </div>
+
+                <!-- Variant Selector Options -->
                 {% if product.variants %}
                 <div class="mb-4">
-                    <label class="form-label fw-bold font-sm mb-2">Select Variant Option:</label>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold font-sm mb-0">Select Option / Style:</label>
+                        <span class="font-xs text-muted fw-semibold" id="selected-variant-label">Selected: {{ product.variants[0] }}</span>
+                    </div>
                     <div class="d-flex flex-wrap gap-2" id="variant-pills-wrap">
                         {% for v in product.variants %}
-                        <button type="button" class="variant-btn {% if loop.first %}active{% endif %}" onclick="selectVariant('{{ v }}', this)">
-                            {{ v }}
+                        <button type="button" class="variant-option-btn {% if loop.first %}active{% endif %}" onclick="selectVariant('{{ v }}', this)">
+                            <i class="fas fa-check font-xs d-none active-check"></i>
+                            <span>{{ v }}</span>
                         </button>
                         {% endfor %}
                     </div>
                 </div>
                 {% endif %}
 
-                <!-- Stock Badge -->
-                <div class="mb-4">
-                    {% if product.in_stock %}
-                    <span class="badge-stock badge-in-stock">
-                        <i class="fas fa-check-circle me-1"></i> In Stock ({{ product.stock_quantity }} units available)
-                    </span>
-                    {% else %}
-                    <span class="badge-stock badge-out-stock">
-                        <i class="fas fa-exclamation-triangle me-1"></i> Currently Out of Stock
-                    </span>
-                    {% endif %}
-                </div>
-
                 <!-- Purchase Buttons Form -->
                 {% if product.in_stock %}
-                <form action="{{ url_for('cart.add_to_cart') }}" method="POST" class="mb-4">
+                <form action="{{ url_for('cart.add_to_cart') }}" method="POST" id="main-buy-form" class="mb-4">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     <input type="hidden" name="variant" id="selected-variant-input" value="{{ product.variants[0] if product.variants else '' }}">
 
-                    <div class="row g-3 align-items-center">
-                        <div class="col-sm-4 col-6">
-                            <div class="input-group input-group-lg border rounded-3 overflow-hidden">
-                                <button class="btn btn-light border-0 px-3 fw-bold" type="button" onclick="adjustQty(-1)">&minus;</button>
-                                <input type="number" name="quantity" id="qty-input" class="form-control text-center border-0 font-sm fw-bold" value="1" min="1" max="{{ product.stock_quantity }}" readonly>
-                                <button class="btn btn-light border-0 px-3 fw-bold" type="button" onclick="adjustQty(1)">&plus;</button>
+                    <!-- Quantity Stepper & Live Total Calculator -->
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <label class="fw-bold font-sm text-dark m-0">Quantity:</label>
+                            <div class="qty-stepper-box">
+                                <button class="qty-step-btn" type="button" onclick="adjustQty(-1)">&minus;</button>
+                                <input type="number" name="quantity" id="qty-input" class="qty-val-input" value="1" min="1" max="{{ product.stock_quantity }}" readonly>
+                                <button class="qty-step-btn" type="button" onclick="adjustQty(1)">&plus;</button>
                             </div>
                         </div>
 
-                        <div class="col-sm-8 col-12 d-flex gap-2">
-                            <button type="submit" class="btn-cta-cart flex-fill">
-                                <i class="fas fa-cart-plus"></i> Add to Cart
+                        <div class="live-total-preview">
+                            Total Price: <span class="live-total-val" id="total-price-preview">{{ product.price_after_discount | currency }}</span>
+                        </div>
+                    </div>
+
+                    <!-- CTA Action Buttons Grid -->
+                    <div class="row g-3" id="buy-buttons-anchor">
+                        <div class="col-sm-6">
+                            <button type="submit" class="btn-cta-cart-lg w-100">
+                                <i class="fas fa-shopping-bag fs-5"></i> Add to Cart
                             </button>
-                            <button type="submit" name="buy_now" value="1" class="btn-cta-buy flex-fill">
-                                <i class="fas fa-bolt"></i> Buy Now
+                        </div>
+                        <div class="col-sm-6">
+                            <button type="submit" name="buy_now" value="1" class="btn-cta-buy-lg w-100">
+                                <i class="fas fa-bolt fs-5"></i> Buy Now
                             </button>
                         </div>
                     </div>
                 </form>
                 {% endif %}
 
-                <!-- Delivery PIN Code Check -->
-                <div class="card border rounded-3 p-3 bg-light mb-4 font-sm">
-                    <div class="fw-bold mb-2 text-dark"><i class="fas fa-truck text-primary me-2"></i> Delivery &amp; COD Availability:</div>
-                    <div class="input-group max-w-sm">
-                        <input type="text" id="pincode-input" class="form-control font-sm" placeholder="Enter 6-digit PIN code" maxlength="6">
-                        <button class="btn btn-primary fw-bold" type="button" onclick="checkPincode()">Check PIN</button>
+                <!-- Delivery PIN Code Eligibility -->
+                <div class="pincode-card-box mb-4">
+                    <div class="fw-bold font-sm text-dark mb-2 d-flex align-items-center justify-content-between">
+                        <span><i class="fas fa-location-dot text-primary me-2"></i> Check Delivery &amp; COD Availability</span>
+                        <span class="font-xs text-muted">Enter pincode</span>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="pincode-input" class="form-control font-sm rounded-start-pill px-3" placeholder="Enter 6-digit PIN Code" maxlength="6">
+                        <button class="btn btn-primary fw-bold font-sm px-4 rounded-end-pill" type="button" onclick="checkPincode()">Check PIN</button>
                     </div>
                     <div id="pincode-result" class="font-xs mt-2 d-none"></div>
                 </div>
 
-                <!-- Short Highlights -->
-                <div class="mt-auto pt-3 border-top">
-                    <h6 class="fw-bold font-sm mb-2">Item Summary:</h6>
-                    <p class="text-secondary font-sm mb-0 lh-lg">{{ product.short_description or 'Engineered with high quality standards for reliable everyday performance.' }}</p>
+                <!-- Trust Benefits Row -->
+                <div class="trust-benefits-row mt-auto">
+                    <div class="trust-benefit-card">
+                        <i class="fas fa-truck-fast"></i>
+                        <div class="trust-benefit-text">Fast Express Delivery</div>
+                    </div>
+                    <div class="trust-benefit-card">
+                        <i class="fas fa-rotate-left"></i>
+                        <div class="trust-benefit-text">30-Day Easy Returns</div>
+                    </div>
+                    <div class="trust-benefit-card">
+                        <i class="fas fa-lock"></i>
+                        <div class="trust-benefit-text">Secure Encrypted Payment</div>
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>
 
-    <!-- Specifications & Reviews -->
+    <!-- Floating Sticky Bottom Purchase Dock -->
+    {% if product.in_stock %}
+    <div id="floating-buy-dock" class="floating-buy-dock">
+        <div class="container d-flex align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3 overflow-hidden">
+                <img src="{{ product.thumbnail }}" alt="{{ product.name }}" class="dock-thumb-img">
+                <div class="d-none d-md-block text-truncate" style="max-width: 380px;">
+                    <div class="fw-bold font-sm text-truncate">{{ product.name }}</div>
+                    <div class="font-xs text-muted">{{ product.brand }} &bull; SKU: {{ product.sku }}</div>
+                </div>
+                <div class="fw-extrabold text-dark font-md">{{ product.price_after_discount | currency }}</div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <form action="{{ url_for('cart.add_to_cart') }}" method="POST" class="d-flex align-items-center gap-2 m-0">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <input type="hidden" name="variant" class="dock-variant-val" value="{{ product.variants[0] if product.variants else '' }}">
+                    <input type="hidden" name="quantity" class="dock-qty-val" value="1">
+                    
+                    <button type="submit" class="btn btn-primary fw-bold font-sm rounded-pill px-4 py-2 text-nowrap">
+                        <i class="fas fa-shopping-bag me-1"></i> Add to Cart
+                    </button>
+                    <button type="submit" name="buy_now" value="1" class="btn btn-warning text-white fw-bold font-sm rounded-pill px-4 py-2 text-nowrap d-none d-sm-inline-block">
+                        <i class="fas fa-bolt me-1"></i> Buy Now
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Specifications, Description & Reviews Tabs -->
     <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 bg-surface" id="reviews-section">
-        <ul class="nav nav-pills mb-4 border-bottom pb-3 gap-2" role="tablist">
+        <ul class="nav nav-pills nav-pills-fancy mb-4 border-bottom pb-3 gap-2" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active fw-bold px-4 py-2" id="specs-tab" data-bs-toggle="tab" data-bs-target="#specs-pane" type="button" role="tab">
+                <button class="nav-link active" id="specs-tab" data-bs-toggle="tab" data-bs-target="#specs-pane" type="button" role="tab">
                     <i class="fas fa-list-ul me-2"></i> Specifications
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link fw-bold px-4 py-2" id="rev-tab" data-bs-toggle="tab" data-bs-target="#rev-pane" type="button" role="tab">
-                    <i class="fas fa-star me-2"></i> Customer Reviews ({{ reviews | length }})
+                <button class="nav-link" id="desc-tab" data-bs-toggle="tab" data-bs-target="#desc-pane" type="button" role="tab">
+                    <i class="fas fa-align-left me-2"></i> Description
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="rev-tab" data-bs-toggle="tab" data-bs-target="#rev-pane" type="button" role="tab">
+                    <i class="fas fa-star me-2"></i> Reviews ({{ reviews | length }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="policy-tab" data-bs-toggle="tab" data-bs-target="#policy-pane" type="button" role="tab">
+                    <i class="fas fa-shield-halved me-2"></i> Warranty &amp; Shipping
                 </button>
             </li>
         </ul>
 
-        <div class="tab-content">
-            <!-- Specifications Pane -->
+        <div class="tab-content pt-2">
+            <!-- Specifications Tab -->
             <div class="tab-pane fade show active" id="specs-pane" role="tabpanel">
-                <h5 class="fw-bold mb-3">Product Overview &amp; Specifications</h5>
-                <div class="row g-4 font-sm">
-                    <div class="col-md-6">
-                        <table class="table table-bordered border-light m-0">
-                            <tbody>
+                <h5 class="fw-bold mb-3 text-dark">Technical Specifications</h5>
+                
+                {% if product.highlights %}
+                <div class="mb-4">
+                    <h6 class="fw-bold text-primary font-sm text-uppercase tracking-wider">Key Product Highlights</h6>
+                    <ul class="list-unstyled row g-2 mt-2 font-sm">
+                        {% for h in product.highlights %}
+                        <li class="col-md-6 d-flex align-items-center gap-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <span>{{ h }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div class="table-responsive">
+                    <table class="table table-bordered font-sm rounded-3 overflow-hidden">
+                        <tbody>
+                            <tr>
+                                <th class="bg-light text-secondary w-30">Brand Name</th>
+                                <td class="fw-bold text-dark">{{ product.brand or 'Standard' }}</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light text-secondary">Model / SKU</th>
+                                <td class="fw-semibold text-dark">{{ product.sku }}</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light text-secondary">Category</th>
+                                <td>{{ product.category or 'General' }}</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light text-secondary">Stock Status</th>
+                                <td>
+                                    {% if product.in_stock %}
+                                    <span class="text-success fw-bold"><i class="fas fa-check me-1"></i> Available in Stock</span>
+                                    {% else %}
+                                    <span class="text-danger fw-bold"><i class="fas fa-times me-1"></i> Out of Stock</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% if product.specifications %}
+                                {% for key, value in product.specifications.items() %}
                                 <tr>
-                                    <th class="bg-light text-secondary w-40">Brand Name</th>
-                                    <td class="fw-bold text-dark">{{ product.brand }}</td>
+                                    <th class="bg-light text-secondary">{{ key }}</th>
+                                    <td>{{ value }}</td>
                                 </tr>
-                                <tr>
-                                    <th class="bg-light text-secondary">Model / SKU</th>
-                                    <td class="fw-semibold text-dark">{{ product.sku }}</td>
-                                </tr>
-                                <tr>
-                                    <th class="bg-light text-secondary">Stock Status</th>
-                                    <td>{{ 'In Stock' if product.in_stock else 'Out of Stock' }}</td>
-                                </tr>
-                                <tr>
-                                    <th class="bg-light text-secondary">Warranty Coverage</th>
-                                    <td>1 Year Official Brand Manufacturer Warranty</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="fw-bold mb-2">Detailed Description:</h6>
-                        <p class="text-secondary lh-lg">
-                            {{ product.description or product.short_description }}
-                        </p>
-                    </div>
+                                {% endfor %}
+                            {% endif %}
+                            <tr>
+                                <th class="bg-light text-secondary">Warranty</th>
+                                <td>1 Year Official Brand Manufacturer Coverage</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <!-- Customer Reviews Pane -->
+            <!-- Description Tab -->
+            <div class="tab-pane fade" id="desc-pane" role="tabpanel">
+                <h5 class="fw-bold mb-3 text-dark">Product Detailed Description</h5>
+                <p class="text-secondary lh-lg font-sm fs-6">
+                    {{ product.description or product.short_description or 'Engineered with high quality standards for reliable everyday performance.' }}
+                </p>
+            </div>
+
+            <!-- Customer Reviews Tab -->
             <div class="tab-pane fade" id="rev-pane" role="tabpanel">
                 <div class="row g-5">
-                    <div class="col-md-4 border-end">
-                        <div class="text-center mb-4">
-                            <div class="display-3 fw-extrabold text-primary">{{ product.rating_avg or 4.5 }}</div>
-                            <div class="text-warning fs-5 mb-1">
-                                {% for i in range((product.rating_avg or 4.5) | int) %}<i class="fas fa-star"></i>{% endfor %}
+                    <!-- Rating Breakdown Column -->
+                    <div class="col-lg-4 border-end">
+                        <div class="rating-hero-card text-center mb-4">
+                            <div class="display-3 fw-extrabold text-primary mb-1">{{ product.rating_avg or 4.5 }}</div>
+                            <div class="text-warning fs-5 mb-2">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
                             </div>
-                            <div class="text-muted font-xs">Based on {{ product.rating_count or 12 }} ratings</div>
+                            <div class="text-muted font-xs fw-semibold">Based on {{ product.rating_count or 12 }} Verified Ratings</div>
+                        </div>
+
+                        <!-- 5 Star Rating Progress Bars -->
+                        <div class="d-flex flex-column gap-2 mb-4 font-xs">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold text-nowrap w-40">5 Stars</span>
+                                <div class="rating-progress-bar flex-grow-1"><div class="rating-progress-fill" style="width: 80%;"></div></div>
+                                <span class="text-muted">80%</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold text-nowrap w-40">4 Stars</span>
+                                <div class="rating-progress-bar flex-grow-1"><div class="rating-progress-fill" style="width: 15%;"></div></div>
+                                <span class="text-muted">15%</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold text-nowrap w-40">3 Stars</span>
+                                <div class="rating-progress-bar flex-grow-1"><div class="rating-progress-fill" style="width: 5%;"></div></div>
+                                <span class="text-muted">5%</span>
+                            </div>
                         </div>
 
                         {% if current_user.is_authenticated and not current_user.is_admin %}
-                        <button type="button" class="btn btn-outline-primary w-100 rounded-pill font-sm fw-bold py-2" data-bs-toggle="collapse" data-bs-target="#writeReviewCollapse">
-                            <i class="fas fa-pen me-2"></i> Write a Product Review
+                        <button type="button" class="btn btn-outline-primary w-100 rounded-pill font-sm fw-bold py-2.5" data-bs-toggle="collapse" data-bs-target="#writeReviewCollapse">
+                            <i class="fas fa-pen me-2"></i> Write a Customer Review
                         </button>
                         {% elif not current_user.is_authenticated %}
-                        <a href="{{ url_for('auth.login', next=request.url) }}" class="btn btn-outline-primary w-100 rounded-pill font-sm fw-bold py-2">
+                        <a href="{{ url_for('auth.login', next=request.url) }}" class="btn btn-outline-primary w-100 rounded-pill font-sm fw-bold py-2.5 text-center">
                             Sign In to Write a Review
                         </a>
                         {% endif %}
                     </div>
 
-                    <div class="col-md-8">
+                    <!-- Reviews List Column -->
+                    <div class="col-lg-8">
                         <div class="collapse mb-4" id="writeReviewCollapse">
-                            <div class="card border rounded-4 p-4 bg-light mb-4">
-                                <h6 class="fw-bold mb-3">Submit Your Rating &amp; Review</h6>
+                            <div class="card border rounded-4 p-4 bg-light">
+                                <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-edit text-primary me-2"></i>Submit Your Product Review</h6>
                                 <form method="POST" action="{{ url_for('main.product_detail', slug=product.slug) }}">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    
                                     <div class="mb-3">
-                                        <label class="form-label fw-bold font-sm">Rating</label>
-                                        <select name="rating" class="form-select font-sm" required>
-                                            <option value="5" selected>⭐⭐⭐⭐⭐ - Excellent (5 Stars)</option>
-                                            <option value="4">⭐⭐⭐⭐ - Good (4 Stars)</option>
-                                            <option value="3">⭐⭐⭐ - Average (3 Stars)</option>
-                                        </select>
+                                        <label class="form-label fw-bold font-sm">Your Overall Rating</label>
+                                        <div class="star-rating-select">
+                                            <input type="radio" id="star5" name="rating" value="5" checked><label for="star5" title="5 stars"><i class="fas fa-star"></i></label>
+                                            <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="4 stars"><i class="fas fa-star"></i></label>
+                                            <input type="radio" id="star3" name="rating" value="3"><label for="star3" title="3 stars"><i class="fas fa-star"></i></label>
+                                            <input type="radio" id="star2" name="rating" value="2"><label for="star2" title="2 stars"><i class="fas fa-star"></i></label>
+                                            <input type="radio" id="star1" name="rating" value="1"><label for="star1" title="1 star"><i class="fas fa-star"></i></label>
+                                        </div>
                                     </div>
+
                                     <div class="mb-3">
                                         <label class="form-label fw-bold font-sm">Review Headline</label>
-                                        <input type="text" name="title" class="form-control font-sm" placeholder="e.g. Excellent build quality and fast delivery" required>
+                                        <input type="text" name="title" class="form-control font-sm rounded-3" placeholder="Summarize your experience (e.g. Excellent build quality!)" required>
                                     </div>
+
                                     <div class="mb-3">
-                                        <label class="form-label fw-bold font-sm">Review Content</label>
-                                        <textarea name="comment" class="form-control font-sm" rows="3" placeholder="Share your experience..." required></textarea>
+                                        <label class="form-label fw-bold font-sm">Detailed Comments</label>
+                                        <textarea name="comment" class="form-control font-sm rounded-3" rows="3" placeholder="What did you like or dislike about this product?" required></textarea>
                                     </div>
-                                    <button type="submit" class="btn btn-primary fw-bold font-sm px-4">Submit Review</button>
+
+                                    <button type="submit" class="btn btn-primary fw-bold font-sm px-4 rounded-pill">
+                                        <i class="fas fa-paper-plane me-1"></i> Post Review
+                                    </button>
                                 </form>
                             </div>
                         </div>
@@ -262,62 +428,141 @@
                         <div class="d-flex flex-column gap-3">
                             {% for rev in reviews %}
                             <div class="card border-0 border-bottom p-3 bg-transparent">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
                                     <div class="d-flex align-items-center gap-2">
-                                        <span class="badge bg-success font-xs">{{ rev.rating }} <i class="fas fa-star"></i></span>
-                                        <span class="fw-bold font-sm">{{ rev.title }}</span>
+                                        <span class="badge bg-success font-xs rounded-pill px-2.5 py-1">
+                                            {{ rev.rating }} <i class="fas fa-star"></i>
+                                        </span>
+                                        <span class="fw-bold font-sm text-dark">{{ rev.title }}</span>
                                     </div>
                                 </div>
-                                <p class="text-secondary font-sm mb-2 mt-2 lh-base">{{ rev.comment }}</p>
-                                <div class="font-xs text-muted"><i class="fas fa-user-circle me-1"></i> {{ rev.user_name }} &bull; Verified Buyer</div>
+                                <p class="text-secondary font-sm mb-2 lh-base">{{ rev.comment }}</p>
+                                <div class="font-xs text-muted d-flex align-items-center gap-2">
+                                    <span><i class="fas fa-user-circle text-primary me-1"></i> {{ rev.user_name }}</span>
+                                    <span>&bull;</span>
+                                    <span class="text-success"><i class="fas fa-circle-check me-1"></i> Verified Buyer</span>
+                                </div>
                             </div>
                             {% endfor %}
                         </div>
                         {% else %}
-                        <div class="text-center py-4 text-muted font-sm">
-                            No reviews posted yet. Be the first to review {{ product.name }}!
+                        <div class="text-center py-5 text-muted font-sm card border-dashed rounded-4 p-4">
+                            <i class="fas fa-comments fs-2 text-muted mb-2"></i>
+                            <div class="fw-bold text-dark">No reviews posted yet</div>
+                            <p class="mb-0 text-secondary font-xs">Be the first to share your experience with {{ product.name }}!</p>
                         </div>
                         {% endif %}
                     </div>
                 </div>
             </div>
+
+            <!-- Shipping & Warranty Tab -->
+            <div class="tab-pane fade" id="policy-pane" role="tabpanel">
+                <div class="row g-4 font-sm">
+                    <div class="col-md-6">
+                        <div class="card border rounded-4 p-4 bg-light h-100">
+                            <h6 class="fw-bold text-dark mb-3"><i class="fas fa-truck text-primary me-2"></i> Shipping &amp; Delivery Terms</h6>
+                            <ul class="text-secondary lh-lg mb-0 ps-3">
+                                <li>Free standard shipping on all orders over ₹500.</li>
+                                <li>Orders dispatched within 24 business hours.</li>
+                                <li>Live real-time tracking provided via SMS and Email.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border rounded-4 p-4 bg-light h-100">
+                            <h6 class="fw-bold text-dark mb-3"><i class="fas fa-rotate-left text-success me-2"></i> Returns &amp; Warranty Policy</h6>
+                            <ul class="text-secondary lh-lg mb-0 ps-3">
+                                <li>30-day hassle-free doorstep returns and replacement.</li>
+                                <li>1-year standard manufacturer defect warranty coverage.</li>
+                                <li>24/7 dedicated customer support assistance.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Related Products Grid Section -->
+    {% if related_products %}
+    <div class="mt-5 pt-3">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h3 class="fw-extrabold mb-1 text-dark">You May Also Like</h3>
+                <p class="text-muted font-sm m-0">Recommended items based on your current selection</p>
+            </div>
+            <a href="{{ url_for('main.catalog', category=product.category_id) }}" class="btn btn-outline-primary rounded-pill font-sm fw-bold px-3 py-1.5">
+                View All <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <div class="row g-4">
+            {% for prod in related_products %}
+            <div class="col-md-3 col-sm-6">
+                {% include "partials/product_card.html" %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+// Base price for calculations
+const unitPrice = parseFloat("{{ product.price_after_discount }}") || 0;
+
+// Image Switcher & Active Thumb Styling
 function changeMainImage(url, thumbEl) {
     const mainImg = document.getElementById('main-product-image');
-    if (mainImg) mainImg.src = url;
-    document.querySelectorAll('.thumb-item').forEach(el => {
-        el.classList.remove('border-primary', 'border-2', 'active-thumb');
+    if (mainImg) {
+        mainImg.style.opacity = '0.5';
+        setTimeout(() => {
+            mainImg.src = url;
+            mainImg.style.opacity = '1';
+        }, 150);
+    }
+    document.querySelectorAll('.thumb-item-box').forEach(el => {
+        el.classList.remove('active-thumb');
     });
     if (thumbEl) {
-        thumbEl.classList.add('border-primary', 'border-2', 'active-thumb');
+        thumbEl.classList.add('active-thumb');
     }
 }
 
+// Variant Selection Handler
 function selectVariant(val, btnEl) {
-    document.getElementById('selected-variant-input').value = val;
+    const hiddenInput = document.getElementById('selected-variant-input');
+    if (hiddenInput) hiddenInput.value = val;
+    
+    // Update floating dock hidden variant
+    document.querySelectorAll('.dock-variant-val').forEach(el => el.value = val);
+
     const wrap = document.getElementById('variant-pills-wrap');
     if (wrap) {
-        wrap.querySelectorAll('.variant-btn').forEach(b => {
+        wrap.querySelectorAll('.variant-option-btn').forEach(b => {
             b.classList.remove('active');
         });
     }
     if (btnEl) {
         btnEl.classList.add('active');
     }
-    showToast(`Selected variant: ${val}`, 'info');
+
+    const label = document.getElementById('selected-variant-label');
+    if (label) label.textContent = `Selected: ${val}`;
+
+    showToast(`Selected option: ${val}`, 'info');
 }
 
+// Quantity Adjuster & Subtotal Preview
 function adjustQty(delta) {
     const qtyInput = document.getElementById('qty-input');
     if (!qtyInput) return;
     let current = parseInt(qtyInput.value) || 1;
-    const max = parseInt(qtyInput.getAttribute('max')) || 10;
+    const max = parseInt(qtyInput.getAttribute('max')) || 99;
     current += delta;
     if (current < 1) current = 1;
     if (current > max) {
@@ -325,8 +570,19 @@ function adjustQty(delta) {
         showToast(`Maximum ${max} units available in stock.`, 'warning');
     }
     qtyInput.value = current;
+
+    // Update dock quantity
+    document.querySelectorAll('.dock-qty-val').forEach(el => el.value = current);
+
+    // Update Live Subtotal Preview
+    const totalPreview = document.getElementById('total-price-preview');
+    if (totalPreview) {
+        const subtotal = (unitPrice * current).toFixed(2);
+        totalPreview.textContent = `₹${subtotal}`;
+    }
 }
 
+// Pincode Verification Tool
 function checkPincode() {
     const pin = document.getElementById('pincode-input').value.trim();
     const resEl = document.getElementById('pincode-result');
@@ -334,8 +590,37 @@ function checkPincode() {
         showToast("Please enter a valid 6-digit PIN code.", "danger");
         return;
     }
-    resEl.className = 'font-xs mt-2 d-block text-success fw-semibold';
-    resEl.innerHTML = `<i class="fas fa-check-circle me-1"></i> Delivery available at <strong>${pin}</strong> within 2-3 business days. Cash on Delivery (COD) eligible!`;
+    resEl.className = 'font-xs mt-2 d-block text-success fw-semibold p-2 rounded bg-light border border-success';
+    resEl.innerHTML = `<i class="fas fa-circle-check me-1 text-success"></i> Delivery available at <strong>${pin}</strong> within 2-3 business days. Cash on Delivery (COD) eligible!`;
 }
+
+// Web Share / Copy Link API
+function shareProductPage() {
+    if (navigator.share) {
+        navigator.share({
+            title: "{{ product.name }}",
+            url: window.location.href
+        }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(window.location.href);
+        showToast("Product link copied to clipboard!", "success");
+    }
+}
+
+// Sticky Bottom Purchase Dock Scroll Listener
+document.addEventListener('DOMContentLoaded', () => {
+    const buyAnchor = document.getElementById('buy-buttons-anchor');
+    const dock = document.getElementById('floating-buy-dock');
+    if (!buyAnchor || !dock) return;
+
+    window.addEventListener('scroll', () => {
+        const rect = buyAnchor.getBoundingClientRect();
+        if (rect.bottom < 0) {
+            dock.classList.add('visible');
+        } else {
+            dock.classList.remove('visible');
+        }
+    });
+});
 </script>
 {% endblock %}

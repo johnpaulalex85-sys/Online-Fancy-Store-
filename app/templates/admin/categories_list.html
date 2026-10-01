@@ -8,7 +8,7 @@
         <div class="card border-0 shadow-sm rounded-4 p-4 bg-white font-sm sticky-top" style="top: 90px;">
             <h5 class="fw-bold mb-4 pb-2 border-bottom"><i class="fas fa-plus-circle text-primary me-2"></i>Add Category</h5>
             
-            <form method="POST" novalidate>
+            <form method="POST" enctype="multipart/form-data" novalidate>
                 {{ form.hidden_tag() }}
 
                 <div class="mb-3">
@@ -17,8 +17,25 @@
                     {% for err in form.name.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
                 </div>
                 <div class="mb-3">
+                    {{ form.description.label(class="form-label fw-bold") }}
+                    {{ form.description(class="form-control", placeholder="e.g. Modern home essentials for a calmer home") }}
+                </div>
+                <div class="mb-3">
                     {{ form.parent_id.label(class="form-label fw-bold") }}
                     {{ form.parent_id(class="form-select") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.icon.label(class="form-label fw-bold") }}
+                    {{ form.icon(class="form-control", placeholder="e.g. fa-mobile-screen, fa-shirt, fa-couch") }}
+                    <small class="text-muted font-xs">FontAwesome icon class name.</small>
+                </div>
+                <div class="mb-3">
+                    {{ form.image.label(class="form-label fw-bold") }}
+                    {{ form.image(class="form-control", placeholder="https://example.com/image.jpg") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.image_upload.label(class="form-label fw-bold") }}
+                    {{ form.image_upload(class="form-control") }}
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-bold">Save Category</button>

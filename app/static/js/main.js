@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initLiveSearch();
     initWishlistButtons();
     initFlashToasts();
+    initCategoryScroll();
+    initPromoScroll();
 });
 
 /* ================= 1. Theme Switcher ================= */
@@ -205,3 +207,45 @@ function initFlashToasts() {
         if (msg) showToast(msg, type);
     });
 }
+
+/* ================= 5. Horizontal Category Scroll ================= */
+function initCategoryScroll() {
+    const track = document.getElementById('categoryCirclesTrack');
+    const btnLeft = document.getElementById('cat-scroll-left');
+    const btnRight = document.getElementById('cat-scroll-right');
+
+    if (!track) return;
+
+    if (btnLeft) {
+        btnLeft.addEventListener('click', () => {
+            track.scrollBy({ left: -280, behavior: 'smooth' });
+        });
+    }
+
+    if (btnRight) {
+        btnRight.addEventListener('click', () => {
+            track.scrollBy({ left: 280, behavior: 'smooth' });
+        });
+    }
+}
+
+function initPromoScroll() {
+    const track = document.getElementById('promoBannersTrack');
+    const btnLeft = document.getElementById('promo-scroll-left');
+    const btnRight = document.getElementById('promo-scroll-right');
+
+    if (!track) return;
+
+    if (btnLeft) {
+        btnLeft.addEventListener('click', () => {
+            track.scrollBy({ left: -540, behavior: 'smooth' });
+        });
+    }
+
+    if (btnRight) {
+        btnRight.addEventListener('click', () => {
+            track.scrollBy({ left: 540, behavior: 'smooth' });
+        });
+    }
+}
+
